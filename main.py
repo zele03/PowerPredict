@@ -1,4 +1,4 @@
-from src.preprocessing import create_processed_dataset
+from src.step01_preprocessing import create_processed_dataset
 
 def main():
     create_processed_dataset()
