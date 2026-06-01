@@ -41,7 +41,7 @@ def create_processed_dataset():
     missing_rows_per_day = df.groupby("date_only")["has_missing"].sum()
 
     expected_rows_per_day = 1440  # broj minuta u danu
-    missing_limit = 60            # prag tolerancije
+    missing_limit = 60  # prag tolerancije
 
     # 6) Računamo koliko redova fali do punog dana
     incomplete_rows_per_day = expected_rows_per_day - measurements_per_day
@@ -92,7 +92,6 @@ def create_processed_dataset():
     numeric_cols = hourly_df.select_dtypes(include="number").columns
     hourly_df[numeric_cols] = hourly_df[numeric_cols].round(4)
 
-
     # 18) Snimamo rezultat u processed.csv
     processed_path.parent.mkdir(parents=True, exist_ok=True)
     hourly_df.to_csv(processed_path, index=False)
@@ -101,17 +100,25 @@ def create_processed_dataset():
     report_path.parent.mkdir(parents=True, exist_ok=True)
 
     report_entries = [
-      {"Opis": "Ukupan broj dana u raw datasetu", "Vrednost": len(measurements_per_day)},
+        {
+            "Opis": "Ukupan broj dana u raw datasetu",
+            "Vrednost": len(measurements_per_day),
+        },
         {"Opis": "Broj dana obrisanih", "Vrednost": len(days_to_remove)},
         {"Opis": "Lista obrisanih dana", "Vrednost": sorted(days_to_remove)},
         {"Opis": "Broj redova u processed datasetu", "Vrednost": len(hourly_df)},
         {"Opis": "Kolone u processed datasetu", "Vrednost": hourly_df.columns.tolist()},
-        {"Opis": "Prosečan broj redova po danu", "Vrednost": measurements_per_day.mean()},
-        {"Opis": "Prosečan broj missing vrednosti po danu", "Vrednost": missing_rows_per_day.mean()},
+        {
+            "Opis": "Prosečan broj redova po danu",
+            "Vrednost": measurements_per_day.mean(),
+        },
+        {
+            "Opis": "Prosečan broj missing vrednosti po danu",
+            "Vrednost": missing_rows_per_day.mean(),
+        },
     ]
 
     report_df = pd.DataFrame(report_entries)
     report_df.to_csv(report_path, index=False)
-
 
     return hourly_df, report_df
