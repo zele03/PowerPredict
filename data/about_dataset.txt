@@ -1,9 +1,6 @@
 From https://www.kaggle.com/datasets/uciml/electric-power-consumption-data-set/data
 
 About Dataset
-I need help to analyze this data set with R code, if someone can help me I'd appreciate a lot and I'd send some money for his kindness. I really need how to do a regression and clustering manipulating this data.
-Sorry about the format, it's in text file.
-Thanks in advance :)
 
 Context: Measurements of electric power consumption in one household with a one-minute sampling rate over a period of almost 4 years. Different electrical quantities and some sub-metering values are available.
 

@@ -10,4 +10,4 @@ wheels/
 .venv
 
 #Dataset
-dataset/raw.txt
+data/raw/raw.txt
