@@ -5,7 +5,7 @@
 
 ## 1. Uvod
 Projekat je urađen u okviru predmeta **Inteligentni sistemi** na Fakultetu Tehničkih Nauka u Novom Sadu.  
-Cilj projekta je predikcija vremenskih serija – potrošnja električne energije – pomoću neuronskih mreža.
+Cilj projekta je predikcija vremenskih serija – potrošnja električne energije – pomoću neuronskih mreža.  
 Rad obuhvata pripremu i čišćenje podataka, njihovu transformaciju u oblik pogodan za analizu, kao i kasniji razvoj modela za predikciju, koji obuhvata izbor odgovarajuće arhitekture neuronske mreže, 
 trening nad pripremljenim podacima i evaluaciju performansi modela u odnosu na definisane metrike.
 
