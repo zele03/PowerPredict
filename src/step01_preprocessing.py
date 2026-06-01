@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
+
 def create_processed_dataset():
     raw_path = Path("data/raw/raw.txt")
     processed_path = Path("data/processed/processed.csv")
