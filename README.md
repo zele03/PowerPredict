@@ -1,10 +1,9 @@
 # PowerPredict
 
-## 📌 Opis
-Projekat za predikciju vremenskih serija – potrošnja električne energije – pomoću neuronskih mreža.  
-Urađen u okviru predmeta **Inteligentni sistemi** na FTN Novi Sad.  
 
-## ⚙️ Instalacija i pokretanje
+#### Projekat za predikciju vremenskih serija – potrošnja električne energije – pomoću neuronskih mreža, urađen u okviru predmeta **Inteligentni sistemi** na FTN Novi Sad.  
+
+## Instalacija i pokretanje
 ```bash
 # Kloniraj repozitorijum
 git clone https://github.com/zele03/PowerPredict.git
