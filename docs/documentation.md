@@ -11,7 +11,7 @@ trening nad pripremljenim podacima i evaluaciju performansi modela u odnosu na d
 
 
 ## 2. Dataset
-- **Izvor podataka:** Individual Household Electric Power Consumption dataset (UCI Machine Learning Repository) 
+- **Izvor podataka:** Individual Household Electric Power Consumption dataset (UCI Machine Learning Repository) containing 2075259 measurements gathered in a house located in Sceaux (7km of Paris, France)
   - Originalno objavljen na [UCI Machine Learning Repository](https://archive.ics.uci.edu/ml/datasets/individual+household+electric+power+consumption)  
   - Dostupan i na [Kaggle](https://www.kaggle.com/datasets/uciml/electric-power-consumption-data-set)  
 - **Struktura:** originalni podaci obuhvataju minutna merenja potrošnje električne energije, ali i druge prateće vrednosti vezane za rad kućnog elektro‑sistema.  
