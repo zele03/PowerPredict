@@ -13,6 +13,6 @@ wheels/
 data/raw/raw.txt
 data/processed/preprocessed.csv
 data/processed/features.csv
-data/splits/train.csv
-data/splits/validation.csv
-data/splits/test.csv
+data/processed/split/train.csv
+data/processed/split/validation.csv
+data/processed/split/test.csv
