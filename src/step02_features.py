@@ -103,6 +103,10 @@ def create_feature_dataset(
         if df_old.equals(df_new):
             return df_old
 
+    # Zaokružujemo sve numeričke kolone na 4 decimale
+    numeric_cols = df_new.select_dtypes(include="number").columns
+    df_new[numeric_cols] = df_new[numeric_cols].round(4)
+
     # snimi novi fajl
     features_path.parent.mkdir(parents=True, exist_ok=True)
     df_new.to_csv(features_path, index=False)
