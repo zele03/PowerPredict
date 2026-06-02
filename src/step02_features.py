@@ -97,6 +97,9 @@ def create_feature_dataset(
     df_new = add_rolling_features(df_new)
     df_new = add_holiday_feature(df_new)
 
+    # Brišemo prve redove koji nemaju dovoljno istorije za lag/rolling feature-e
+    df_new = df_new.dropna().reset_index(drop=True)
+
     # zaštita: ako fajl već postoji, uporedi
     if features_path.exists():
         df_old = pd.read_csv(features_path, parse_dates=["datetime"])
