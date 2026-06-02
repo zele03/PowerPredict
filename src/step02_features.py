@@ -1,5 +1,5 @@
 import pandas as pd  # noqa: F401
-from datetime import date
+from datetime import date  # noqa: F401
 from pathlib import Path
 
 
@@ -55,11 +55,8 @@ def add_holiday_feature(df, datetime_col="datetime", holidays=None):
     if holidays is None:
         holidays = [
             (1, 1),  # Nova godina
-            (4, 6),  # Uskršnji ponedeljak
             (5, 1),  # Praznik rada
             (5, 8),  # Dan pobede 1945
-            (5, 14),  # Spasovdan
-            (5, 25),  # Duhovski ponedeljak
             (7, 14),  # Dan Bastilje
             (8, 15),  # Velika Gospojina
             (11, 1),  # Svi sveti
