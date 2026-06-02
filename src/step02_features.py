@@ -54,17 +54,17 @@ def add_holiday_feature(df, datetime_col="datetime", holidays=None):
     """
     if holidays is None:
         holidays = [
-            date(1, 1),  # Nova godina
-            date(4, 6),  # Uskršnji ponedeljak
-            date(5, 1),  # Praznik rada
-            date(5, 8),  # Dan pobede 1945
-            date(5, 14),  # Spasovdan
-            date(5, 25),  # Duhovski ponedeljak
-            date(7, 14),  # Dan Bastilje
-            date(8, 15),  # Velika Gospojina
-            date(11, 1),  # Svi sveti
-            date(11, 11),  # Dan primirja 1918
-            date(12, 25),  # Božić
+            (1, 1),  # Nova godina
+            (4, 6),  # Uskršnji ponedeljak
+            (5, 1),  # Praznik rada
+            (5, 8),  # Dan pobede 1945
+            (5, 14),  # Spasovdan
+            (5, 25),  # Duhovski ponedeljak
+            (7, 14),  # Dan Bastilje
+            (8, 15),  # Velika Gospojina
+            (11, 1),  # Svi sveti
+            (11, 11),  # Dan primirja 1918
+            (12, 25),  # Božić
         ]
 
     df["is_holiday"] = df[datetime_col].apply(
