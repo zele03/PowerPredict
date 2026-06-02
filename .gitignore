@@ -11,5 +11,8 @@ wheels/
 
 #Dataset
 data/raw/raw.txt
-data/processed/processed.csv
+data/processed/preprocessed.csv
 data/processed/features.csv
+data/splits/train.csv
+data/splits/validation.csv
+data/splits/test.csv

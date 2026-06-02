@@ -147,11 +147,11 @@ def create_report(
             "Vrednost": sorted(days_to_remove),
         },
         {
-            "Opis": "Broj redova u processed datasetu",
+            "Opis": "Broj redova u preprocessed datasetu",
             "Vrednost": len(hourly_df),
         },
         {
-            "Opis": "Kolone u processed datasetu",
+            "Opis": "Kolone u preprocessed datasetu",
             "Vrednost": hourly_df.columns.tolist(),
         },
         {
@@ -170,7 +170,7 @@ def create_report(
 
 def save_outputs(hourly_df, report_df, processed_path, report_path):
     """
-    Čuva processed dataset i preprocessing report.
+    Čuva preprocessed dataset i preprocessing report.
     """
     processed_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.parent.mkdir(parents=True, exist_ok=True)
@@ -183,11 +183,11 @@ def create_processed_dataset():
     """
     Glavna funkcija za preprocessing.
 
-    Od raw dataseta pravi processed.csv i full_report.csv.
+    Od raw dataseta pravi preprocessed.csv i preprocessing_report.csv.
     """
     raw_path = Path("data/raw/raw.txt")
-    processed_path = Path("data/processed/processed.csv")
-    report_path = Path("data/processed/logs/full_report.csv")
+    processed_path = Path("data/processed/preprocessed.csv")
+    report_path = Path("data/processed/logs/preprocessing_report.csv")
 
     # Ako fajlovi već postoje, samo ih učitaj
     if processed_path.exists() and report_path.exists():

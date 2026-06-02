@@ -71,11 +71,11 @@ def add_holiday_feature(df, datetime_col="datetime", holidays=None):
 
 
 def create_feature_dataset(
-    processed_path="data/processed/processed.csv",
+    processed_path="data/processed/preprocessed.csv",
     features_path="data/processed/features.csv",
 ):
     """
-    Kreira feature dataset iz processed.csv i snima ga u features.csv.
+    Kreira feature dataset iz preprocessed.csv i snima ga u features.csv.
     Ako features.csv već postoji i identičan je novom, preskače snimanje.
     Ako postoji ali se razlikuje, prepisuje ga.
     """
@@ -87,7 +87,7 @@ def create_feature_dataset(
             f"{processed_path} ne postoji. Prvo pokreni preprocessing."
         )
 
-    # učitaj processed.csv
+    # učitaj preprocessed.csv
     df = pd.read_csv(processed_path, parse_dates=["datetime"])
 
     # pozovi sve feature funkcije redom

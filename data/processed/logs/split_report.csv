@@ -1,0 +1,7 @@
+Opis,Vrednost
+Broj redova u train skupu,23671
+Broj redova u validation skupu,5072
+Broj redova u test skupu,5073
+Train period,2006-12-24 00:00:00 - 2009-09-14 06:00:00
+Validation period,2009-09-14 07:00:00 - 2010-04-18 14:00:00
+Test period,2010-04-18 15:00:00 - 2010-11-25 23:00:00
