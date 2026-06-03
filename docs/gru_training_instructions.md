@@ -1,65 +1,111 @@
 # GRU Training Instructions
 
-Ovaj step se pokrece na masini koja ima PyTorch okruzenje, po mogucnosti sa CUDA/GPU podrskom.
+This document explains how to run the GRU model after cloning or pulling the
+project.
 
-## 1. Provera podataka
+The default project workflow does not train the GRU model, because GRU training
+requires a PyTorch environment and can be much slower than preprocessing,
+baseline evaluation, and baseline visualization.
 
-Pre treninga treba da postoje:
+## 1. Run the default pipeline
+
+Run this first:
+
+```bash
+uv run main.py
+```
+
+Equivalent commands:
+
+```bash
+uv run python main.py
+python main.py
+```
+
+This runs:
+
+```text
+step01 preprocessing
+step02 feature engineering
+step03 time-based train/validation/test split
+step04 baseline model
+step05 baseline visualizations
+```
+
+It creates the files needed before GRU training, including:
 
 ```text
 data/processed/split/train.csv
 data/processed/split/validation.csv
 data/processed/split/test.csv
 data/logs/baseline_report.csv
+data/graphs/baseline_graphs/
 ```
 
-Ako ne postoje, prvo pokrenuti:
+## 2. Prepare PyTorch
+
+GRU training requires PyTorch. GPU/CUDA support is recommended, but the model can
+also run on CPU.
+
+Check the PyTorch installation:
 
 ```bash
-python main.py
+uv run python -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
 ```
 
-## 2. Trening GRU modela
+If `torch.cuda.is_available()` prints `True`, the model will use GPU.
 
-Pokrenuti:
+If PyTorch is missing or the installed version does not match your CUDA setup,
+install PyTorch using the official command for your machine:
+
+```text
+https://pytorch.org/get-started/locally/
+```
+
+## 3. Train the GRU model
+
+After the default pipeline is finished, run:
 
 ```bash
-python -m src.step06_gru_model
+uv run main.py gru-train
 ```
 
-Ovaj korak snima:
+Equivalent module command:
+
+```bash
+uv run python -m src.step06_gru_model
+```
+
+This creates:
 
 ```text
 models/gru_model.pt
 data/logs/gru_training_history.csv
 data/logs/gru_report.csv
+data/logs/baseline_gru_compare_report.csv
 data/predictions/gru_validation_predictions.csv
 data/predictions/gru_test_predictions.csv
 ```
 
-`gru_report.csv` ima isti princip kao baseline report:
+The model is trained only on the train split. Validation is used for early
+stopping. Test is used only for final evaluation.
 
-```text
-summary redovi za validation i test
-hourly redovi za svaki sat 0-23
-WAPE, MAE, RMSE, MAPE, sMAPE
-```
+## 4. Create GRU graphs
 
-## 3. GRU grafici
-
-Kada se trening zavrsi, pokrenuti:
+After training, run:
 
 ```bash
-python -m src.step07_gru_visualization
+uv run main.py gru-visualizations
 ```
 
-Grafici se snimaju u:
+This creates both GRU-only graphs and baseline-vs-GRU comparison graphs:
 
 ```text
 data/graphs/gru_graphs/
+data/graphs/baseline_gru_compare_graphs/
 ```
 
-Generisu se samo test grafici:
+GRU-only graphs:
 
 ```text
 gru_test_hourly_wape.png
@@ -68,6 +114,45 @@ gru_test_actual_vs_predicted_scatter.png
 gru_test_error_distribution.png
 ```
 
-## 4. Napomena za PyTorch/CUDA
+Comparison graphs:
 
-Ako instalacija `torch` dependency-ja ne povuce GPU verziju, instalirati PyTorch komandom sa zvanicnog PyTorch sajta za konkretnu CUDA verziju na toj masini.
+```text
+baseline_gru_compare_test_hourly_wape.png
+baseline_gru_compare_test_hourly_mae.png
+baseline_gru_compare_test_actual_vs_predicted_scatter.png
+baseline_gru_compare_test_error_distribution.png
+```
+
+## 5. Optional commands
+
+Run only the GRU graphs:
+
+```bash
+uv run main.py gru-graphs
+```
+
+Run only the baseline-vs-GRU comparison graphs:
+
+```bash
+uv run main.py gru-compare-graphs
+```
+
+Run GRU training and all GRU visualizations in one command:
+
+```bash
+uv run main.py gru-pipeline
+```
+
+Use `gru-pipeline` only when the machine already has a working PyTorch setup.
+
+## 6. Main command summary
+
+```bash
+uv run main.py                    # default baseline workflow
+uv run main.py baseline           # same as default
+uv run main.py gru-train          # train GRU model
+uv run main.py gru-graphs         # create GRU-only graphs
+uv run main.py gru-compare-graphs # create comparison graphs
+uv run main.py gru-visualizations # create all GRU graphs
+uv run main.py gru-pipeline       # train GRU and create all GRU graphs
+```
