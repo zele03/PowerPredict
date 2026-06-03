@@ -1,21 +1,23 @@
 from pathlib import Path
+from tqdm import trange
 
 import numpy as np
 import pandas as pd
 
 
-TARGET_COLUMN = "Energy_kWh"
-MODEL_NAME = "GRU"
-SEQUENCE_LENGTH = 24
-BATCH_SIZE = 64
-HIDDEN_SIZE = 64
-NUM_LAYERS = 2
-DROPOUT = 0.2
-LEARNING_RATE = 0.001
-MAX_EPOCHS = 80
-PATIENCE = 10
-RANDOM_SEED = 42
-PERCENTAGE_MULTIPLIER = 100
+TARGET_COLUMN = "Energy_kWh"    # Kolona koju model pokusava da predvidi
+MODEL_NAME = "GRU"              # Naziv modela koji se upisuje u report
+BASELINE_MODEL_NAME = "Baseline lag_24h"
+SEQUENCE_LENGTH = 24            # Broj prethodnih sati koje GRU koristi za jednu predikciju
+BATCH_SIZE = 64                 # Broj sekvenci koje model obradjuje odjednom tokom treninga
+HIDDEN_SIZE = 64                # Velicina skrivene memorije GRU sloja
+NUM_LAYERS = 2                  # Broj naslaganih GRU slojeva
+DROPOUT = 0.2                   # Regularizacija koja smanjuje overfitting izmedju GRU slojeva
+LEARNING_RATE = 0.001           # Brzina kojom optimizer menja tezine modela
+MAX_EPOCHS = 80                 # Maksimalan broj epoha treninga
+PATIENCE = 10                   # Broj epoha bez poboljsanja nakon kog se trening zaustavlja
+RANDOM_SEED = 42                # Seed za ponovljivost rezultata
+PERCENTAGE_MULTIPLIER = 100     # Koristi se da procentualne metrike budu u procentima
 
 EXCLUDED_FEATURE_COLUMNS = [
     "datetime",
@@ -85,9 +87,7 @@ def get_feature_columns(df):
     Bira feature kolone koje ne sadrze target za isti sat.
     """
     feature_columns = [
-        column
-        for column in df.columns
-        if column not in EXCLUDED_FEATURE_COLUMNS
+        column for column in df.columns if column not in EXCLUDED_FEATURE_COLUMNS
     ]
 
     return feature_columns
@@ -269,7 +269,9 @@ def train_gru_model(model, train_loader, validation_loader, device, torch, nn):
     epochs_without_improvement = 0
     history_rows = []
 
-    for epoch in range(1, MAX_EPOCHS + 1):
+    progress_bar = trange(1, MAX_EPOCHS + 1, desc="Training GRU model")
+
+    for epoch in progress_bar:
         train_loss = train_one_epoch(
             torch,
             model,
@@ -303,6 +305,13 @@ def train_gru_model(model, train_loader, validation_loader, device, torch, nn):
             epochs_without_improvement = 0
         else:
             epochs_without_improvement += 1
+
+        progress_bar.set_description(
+            f"Epoch {epoch} | "
+            f"Train: {train_loss:.4f} | "
+            f"Val: {validation_loss:.4f} | "
+            f"Best: {best_validation_loss:.4f}"
+        )
 
         if epochs_without_improvement >= PATIENCE:
             break
@@ -348,7 +357,9 @@ def calculate_metrics(y_true, y_pred):
     smape_denominator = np.abs(y_true) + np.abs(y_pred)
     valid_smape_mask = smape_denominator > 0
     smape = (
-        np.mean(2 * absolute_errors[valid_smape_mask] / smape_denominator[valid_smape_mask])
+        np.mean(
+            2 * absolute_errors[valid_smape_mask] / smape_denominator[valid_smape_mask]
+        )
         * PERCENTAGE_MULTIPLIER
     )
 
@@ -402,6 +413,62 @@ def create_prediction_report(predictions_df, dataset_name):
     return pd.DataFrame(report_rows)
 
 
+def load_baseline_report():
+    """
+    Ucitava baseline report ako postoji.
+    """
+    report_path = Path("data/logs/baseline_report.csv")
+
+    if not report_path.exists():
+        return None
+
+    return pd.read_csv(report_path)
+
+
+def create_baseline_gru_compare_report(baseline_report_df, gru_report_df):
+    """
+    Kreira uporedni report sa baseline i GRU metrikama u istom redu.
+    """
+    baseline_df = baseline_report_df.copy()
+    gru_df = gru_report_df.copy()
+
+    baseline_df["Model"] = BASELINE_MODEL_NAME
+    baseline_df = baseline_df.drop(columns=["Baseline"], errors="ignore")
+
+    metric_columns = ["WAPE", "MAE", "RMSE", "MAPE", "sMAPE"]
+    key_columns = ["Report_Type", "Dataset", "Hour"]
+
+    baseline_metrics = baseline_df[
+        key_columns + metric_columns + ["Broj_redova"]
+    ].rename(
+        columns={
+            **{metric: f"Baseline_{metric}" for metric in metric_columns},
+            "Broj_redova": "Baseline_Broj_redova",
+        }
+    )
+    gru_metrics = gru_df[key_columns + metric_columns + ["Broj_redova"]].rename(
+        columns={
+            **{metric: f"GRU_{metric}" for metric in metric_columns},
+            "Broj_redova": "GRU_Broj_redova",
+        }
+    )
+
+    compare_df = baseline_metrics.merge(gru_metrics, on=key_columns, how="inner")
+
+    for metric in metric_columns:
+        difference_column = f"{metric}_Difference_Baseline_minus_GRU"
+        improvement_column = f"{metric}_Improvement_percent"
+
+        compare_df[difference_column] = (
+            compare_df[f"Baseline_{metric}"] - compare_df[f"GRU_{metric}"]
+        ).round(4)
+        compare_df[improvement_column] = (
+            compare_df[difference_column] / compare_df[f"Baseline_{metric}"] * 100
+        ).round(4)
+
+    return compare_df
+
+
 def save_outputs(
     torch,
     model,
@@ -412,6 +479,7 @@ def save_outputs(
     validation_predictions_df,
     test_predictions_df,
     report_df,
+    compare_report_df=None,
 ):
     """
     Cuva model, istoriju treninga, predikcije i GRU report.
@@ -446,6 +514,12 @@ def save_outputs(
         index=False,
     )
     report_df.to_csv(logs_dir / "gru_report.csv", index=False)
+
+    if compare_report_df is not None:
+        compare_report_df.to_csv(
+            logs_dir / "baseline_gru_compare_report.csv",
+            index=False,
+        )
 
 
 def create_gru_model():
@@ -548,6 +622,14 @@ def create_gru_model():
         ignore_index=True,
     )
 
+    baseline_report_df = load_baseline_report()
+    compare_report_df = None
+    if baseline_report_df is not None:
+        compare_report_df = create_baseline_gru_compare_report(
+            baseline_report_df,
+            report_df,
+        )
+
     save_outputs(
         torch,
         model,
@@ -558,6 +640,7 @@ def create_gru_model():
         validation_predictions_df,
         test_predictions_df,
         report_df,
+        compare_report_df,
     )
 
     return report_df
