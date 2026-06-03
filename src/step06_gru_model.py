@@ -197,7 +197,15 @@ def build_gru_model_class(nn):
     return GRURegressor
 
 
-def create_data_loader(torch, TensorDataset, x_values, y_values, batch_size, shuffle):
+def create_data_loader(
+    torch,
+    DataLoader,
+    TensorDataset,
+    x_values,
+    y_values,
+    batch_size,
+    shuffle,
+):
     """
     Kreira PyTorch DataLoader.
     """
@@ -479,6 +487,7 @@ def create_gru_model():
 
     train_loader = create_data_loader(
         torch,
+        DataLoader,
         TensorDataset,
         x_train,
         y_train,
@@ -487,6 +496,7 @@ def create_gru_model():
     )
     validation_loader = create_data_loader(
         torch,
+        DataLoader,
         TensorDataset,
         x_validation,
         y_validation,
