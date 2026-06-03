@@ -75,6 +75,8 @@ trening nad pripremljenim podacima i evaluaciju performansi modela u odnosu na d
     | Validation  | 53.05    | 0.66      | 0.96       | 74.79    | 52.07     |
     | Test        | 53.47    | 0.51      | 0.76       | 66.80    | 49.29     |
 
+  - **Grafički prikaz** rezultata dostupan u: `data\graphs\baseline_graphs`.
+
 - **Analiza po satima (test skup)**
 
     | Kategorija       | Sati                 | WAPE (%) approx |
