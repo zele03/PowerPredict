@@ -66,7 +66,7 @@ def save_split_outputs(train_df, validation_df, test_df, report_df):
     Čuva train, validation, test i split report fajlove.
     """
     split_dir = Path("data/processed/split")
-    logs_dir = Path("data/processed/logs")
+    logs_dir = Path("data/logs")
 
     split_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
@@ -89,7 +89,7 @@ def create_train_validation_test_split(
     features_path = Path(features_path)
 
     split_dir = Path("data/processed/split")
-    report_path = Path("data/processed/logs/split_report.csv")
+    report_path = Path("data/logs/split_report.csv")
 
     train_path = split_dir / "train.csv"
     validation_path = split_dir / "validation.csv"

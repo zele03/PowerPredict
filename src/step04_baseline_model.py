@@ -99,7 +99,7 @@ def save_baseline_report(report_df):
     """
     Cuva baseline izvestaj u logs folder.
     """
-    logs_dir = Path("data/processed/logs")
+    logs_dir = Path("data/logs")
     logs_dir.mkdir(parents=True, exist_ok=True)
 
     report_df.to_csv(logs_dir / "baseline_report.csv", index=False)
