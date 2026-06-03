@@ -1,12 +1,12 @@
 # PowerPredict
 
-PowerPredict is a student project for forecasting household electricity
-consumption from the Household Power Consumption dataset.
+PowerPredict je studentski projekat za predikciju potrosnje elektricne energije
+u domacinstvu na osnovu Household Power Consumption dataset-a.
 
-The system predicts hourly energy consumption and evaluates models on validation
-and test splits using WAPE, MAE, RMSE, MAPE, and sMAPE.
+Sistem predvidja potrosnju energije po satima i evaluira modele nad validation i
+test skupovima pomocu metrika WAPE, MAE, RMSE, MAPE i sMAPE.
 
-## Project Structure
+## Struktura Projekta
 
 ```text
 main.py
@@ -16,7 +16,7 @@ docs/
 models/
 ```
 
-Main workflow steps:
+Glavni koraci workflow-a:
 
 ```text
 src/step01_preprocessing.py
@@ -28,72 +28,72 @@ src/step06_gru_model.py
 src/step07_gru_visualization.py
 ```
 
-## Installation
+## Instalacija
 
-Clone the repository:
+Klonirati repozitorijum:
 
 ```bash
 git clone https://github.com/zele03/PowerPredict.git
 cd PowerPredict
 ```
 
-Create the virtual environment and install dependencies with `uv`:
+Kreirati virtuelno okruzenje i instalirati zavisnosti pomocu `uv`:
 
 ```bash
 uv sync
 ```
 
-## Default Run
+## Osnovno Pokretanje
 
-Run the standard pipeline:
+Pokrenuti standardni pipeline:
 
 ```bash
 uv run main.py
 ```
 
-This runs preprocessing, feature engineering, train/validation/test split,
-baseline evaluation, and baseline visualizations.
+Ova komanda pokrece preprocessing, feature engineering,
+train/validation/test split, baseline evaluaciju i baseline vizualizacije.
 
-It does not train the GRU model.
+GRU model se ne trenira u osnovnom pokretanju.
 
 ## GRU Model
 
-The GRU model is not executed by default because it requires a PyTorch setup and
-can benefit from CUDA/GPU support.
+GRU model se ne pokrece podrazumevano zato sto zahteva PyTorch okruzenje i moze
+da koristi CUDA/GPU podrsku.
 
-After the default pipeline is finished, train GRU explicitly:
+Nakon sto se zavrsi osnovni pipeline, GRU se trenira eksplicitno:
 
 ```bash
 uv run main.py gru-train
 ```
 
-Then generate GRU and baseline-vs-GRU graphs:
+Zatim se generisu GRU i baseline-vs-GRU grafici:
 
 ```bash
 uv run main.py gru-visualizations
 ```
 
-For detailed GRU setup and command explanations, see:
+Detaljno uputstvo za GRU setup i objasnjenje komandi nalazi se u:
 
 ```text
 docs/gru_training_instructions.md
 ```
 
-## Main Commands
+## Glavne Komande
 
 ```bash
-uv run main.py                    # default baseline workflow
-uv run main.py baseline           # same as default
-uv run main.py gru-train          # train GRU model
-uv run main.py gru-graphs         # create GRU-only graphs
-uv run main.py gru-compare-graphs # create comparison graphs
-uv run main.py gru-visualizations # create all GRU graphs
-uv run main.py gru-pipeline       # train GRU and create all GRU graphs
+uv run main.py                    # osnovni baseline workflow
+uv run main.py baseline           # isto kao osnovno pokretanje
+uv run main.py gru-train          # trenira GRU model
+uv run main.py gru-graphs         # pravi samo GRU grafike
+uv run main.py gru-compare-graphs # pravi uporedne grafike
+uv run main.py gru-visualizations # pravi sve GRU grafike
+uv run main.py gru-pipeline       # trenira GRU i pravi sve GRU grafike
 ```
 
-## Documentation
+## Dokumentacija
 
-Detailed project documentation:
+Detaljna projektna dokumentacija:
 
 ```text
 docs/documentation.md
