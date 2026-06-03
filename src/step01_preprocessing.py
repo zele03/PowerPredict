@@ -168,15 +168,68 @@ def create_report(
     return report_df
 
 
-def save_outputs(hourly_df, report_df, processed_path, report_path):
+def create_dataset_report(hourly_df):
+    """
+    Kreira kratak report za lakse razumevanje preprocessed dataseta.
+    """
+    power = hourly_df["Global_active_power"]
+
+    report_entries = [
+        {
+            "Opis": "Minimalna satna potrosnja Global_active_power",
+            "Vrednost": round(power.min(), 4),
+        },
+        {
+            "Opis": "Maksimalna satna potrosnja Global_active_power",
+            "Vrednost": round(power.max(), 4),
+        },
+        {
+            "Opis": "Prosecna satna potrosnja Global_active_power",
+            "Vrednost": round(power.mean(), 4),
+        },
+        {
+            "Opis": "Medijana satne potrosnje Global_active_power",
+            "Vrednost": round(power.median(), 4),
+        },
+        {
+            "Opis": "Procenat sati sa potrosnjom ispod ili jednako 0.5 kWh",
+            "Vrednost": round((power <= 0.5).mean() * 100, 2),
+        },
+        {
+            "Opis": "Procenat sati sa potrosnjom ispod ili jednako 1.0 kWh",
+            "Vrednost": round((power <= 1.0).mean() * 100, 2),
+        },
+        {
+            "Opis": "Zakljucak",
+            "Vrednost": (
+                "Veliki deo sati ima nisku potrosnju, pa procentualne metrike "
+                "treba tumaciti pazljivo."
+            ),
+        },
+    ]
+
+    report_df = pd.DataFrame(report_entries)
+    return report_df
+
+
+def save_outputs(
+    hourly_df,
+    report_df,
+    dataset_report_df,
+    processed_path,
+    report_path,
+    dataset_report_path,
+):
     """
     Čuva preprocessed dataset i preprocessing report.
     """
     processed_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.parent.mkdir(parents=True, exist_ok=True)
+    dataset_report_path.parent.mkdir(parents=True, exist_ok=True)
 
     hourly_df.to_csv(processed_path, index=False)
     report_df.to_csv(report_path, index=False)
+    dataset_report_df.to_csv(dataset_report_path, index=False)
 
 
 def create_processed_dataset():
@@ -187,12 +240,18 @@ def create_processed_dataset():
     """
     raw_path = Path("data/raw/raw.txt")
     processed_path = Path("data/processed/preprocessed.csv")
-    report_path = Path("data/processed/logs/preprocessing_report.csv")
+    report_path = Path("data/logs/preprocessing_report.csv")
+    dataset_report_path = Path("data/logs/dataset_report.csv")
 
     # Ako fajlovi već postoje, samo ih učitaj
     if processed_path.exists() and report_path.exists():
         df = pd.read_csv(processed_path)
         report = pd.read_csv(report_path)
+
+        dataset_report_df = create_dataset_report(df)
+        dataset_report_path.parent.mkdir(parents=True, exist_ok=True)
+        dataset_report_df.to_csv(dataset_report_path, index=False)
+
         return df, report
 
     df = load_raw_dataset(raw_path)
@@ -215,7 +274,15 @@ def create_processed_dataset():
         days_to_remove,
         hourly_df,
     )
+    dataset_report_df = create_dataset_report(hourly_df)
 
-    save_outputs(hourly_df, report_df, processed_path, report_path)
+    save_outputs(
+        hourly_df,
+        report_df,
+        dataset_report_df,
+        processed_path,
+        report_path,
+        dataset_report_path,
+    )
 
     return hourly_df, report_df

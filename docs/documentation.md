@@ -21,4 +21,4 @@ trening nad pripremljenim podacima i evaluaciju performansi modela u odnosu na d
     - kod dana gde se takvi slučajevi javljaju u manjem broju od 60, obrisani su samo ti redovi,
   - resamplovanje minutnih podataka u satne proseke, 
   - odabir relevantnih kolona (`Global_active_power`, `Global_reactive_power`, `Global_intensity`),
-  - detalji o celom procesu preprocessinga dostupni su u log fajlu: `data/processed/logs/full_report.csv`.
+  - detalji o celom procesu preprocessinga dostupni su u log fajlu: `data/logs/full_report.csv`.

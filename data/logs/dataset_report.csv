@@ -1,0 +1,8 @@
+Opis,Vrednost
+Minimalna satna potrosnja Global_active_power,0.124
+Maksimalna satna potrosnja Global_active_power,6.5605
+Prosecna satna potrosnja Global_active_power,1.0913
+Medijana satne potrosnje Global_active_power,0.8023
+Procenat sati sa potrosnjom ispod ili jednako 0.5 kWh,39.33
+Procenat sati sa potrosnjom ispod ili jednako 1.0 kWh,55.85
+Zakljucak,"Veliki deo sati ima nisku potrosnju, pa procentualne metrike treba tumaciti pazljivo."
