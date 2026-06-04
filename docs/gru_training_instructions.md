@@ -1,11 +1,11 @@
 # Uputstvo Za Treniranje GRU Modela
 
-Ovaj dokument objasnjava kako se pokrece GRU deo projekta nakon kloniranja ili
+Ovaj dokument objasnjava kako se pokreće GRU deo projekta nakon kloniranja ili
 pull-ovanja projekta.
 
-Osnovni workflow ne trenira GRU model, zato sto GRU trening zahteva PyTorch
-okruzenje i moze da traje znatno duze od preprocessinga, baseline evaluacije i
-baseline vizualizacije, pogotovo zato sto trenira vise modela sa razlicitim
+Osnovni workflow ne trenira GRU model, zato što GRU trening zahteva PyTorch
+okruženje i može da traje znatno duze od preprocessinga, baseline evaluacije i
+baseline vizualizacije, pogotovo zato što trenira više modela sa različitim
 hiperparametrima jedan za drugim.
 
 ## 1. Pokrenuti Osnovni Pipeline
@@ -16,7 +16,7 @@ Prvo pokrenuti:
 uv run main.py
 ```
 
-Ovo pokrece:
+Ovo pokreće:
 
 ```text
 step01 preprocessing
@@ -38,7 +38,7 @@ data/graphs/baseline_graphs/
 
 ## 2. Pripremiti PyTorch
 
-GRU trening zahteva PyTorch. GPU/CUDA podrska je preporucena, ali model moze da
+GRU trening zahteva PyTorch. GPU/CUDA podrška je preporučena, ali model može da
 radi i na CPU-u.
 
 Provera PyTorch instalacije:
@@ -50,7 +50,7 @@ uv run python -c "import torch; print(torch.__version__); print(torch.cuda.is_av
 Ako `torch.cuda.is_available()` ispise `True`, model ce koristiti GPU.
 
 Ako PyTorch nije instaliran ili instalirana verzija ne odgovara CUDA setup-u na
-toj masini, instalirati PyTorch zvanicnom komandom za konkretno okruzenje:
+toj mašini, instalirati PyTorch zvaničnom komandom za konkretno okruzenje:
 
 ```text
 https://pytorch.org/get-started/locally/
@@ -58,7 +58,7 @@ https://pytorch.org/get-started/locally/
 
 ## 3. Pokrenuti GRU Pipeline
 
-Kada se osnovni pipeline zavrsi, pokrenuti:
+Kada se osnovni pipeline završi, pokrenuti:
 
 ```bash
 uv run main.py gru-pipeline
@@ -101,7 +101,7 @@ baseline vs najbolji GRU compare report
 baseline vs najbolji GRU uporedne grafove
 ```
 
-Ovo znaci da se hiperparametri ne biraju po test skupu, vec se test koristi kao
+Ovo znači da se hiperparametri ne biraju po test skupu, već se test koristi kao
 finalna provera modela.
 
 ## 5. Output Fajlovi
@@ -150,7 +150,7 @@ Baseline vs najbolji GRU grafovi:
 data/graphs/baseline_gru_compare_graphs/
 ```
 
-Nazivi grafova sadrze naziv najboljeg GRU modela, a na samim grafovima su
+Nazivi grafova sadrže naziv najboljeg GRU modela, a na samim grafovima su
 ispisani hiperparametri i glavne metrike.
 
 ## 6. Dodavanje Novih GRU Modela

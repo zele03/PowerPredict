@@ -1,10 +1,10 @@
 # PowerPredict
 
-PowerPredict je studentski projekat za predikciju potrosnje elektricne energije
-domacinstva na osnovu Household Power Consumption dataset-a.
+PowerPredict je studentski projekat za predikciju potrosnje električne energije
+domaćinstva na osnovu Household Power Consumption dataset-a.
 
-Sistem predvidja potrosnju energije po satima i evaluira modele nad validation i
-test skupovima pomocu metrika WAPE, MAE, RMSE, MAPE i sMAPE.
+Sistem predviđa potrošnju energije po satima i evaluira modele nad validation i
+test skupovima pomoću metrika MAE, RMSE, MAPE, sMAPE i WAPE.
 
 ## Struktura Projekta
 
@@ -37,7 +37,7 @@ git clone https://github.com/zele03/PowerPredict.git
 cd PowerPredict
 ```
 
-Kreirati virtuelno okruzenje i instalirati zavisnosti pomocu `uv`:
+Kreirati virtuelno okruženje i instalirati zavisnosti pomoću `uv`:
 
 ```bash
 uv sync
@@ -51,17 +51,17 @@ Pokrenuti standardni pipeline:
 uv run main.py
 ```
 
-Ova komanda pokrece preprocessing, feature engineering,
+Ova komanda pokreće preprocessing, feature engineering,
 train/validation/test split, baseline evaluaciju i baseline vizualizacije.
 
 GRU model se ne trenira u osnovnom pokretanju.
 
 ## GRU Model
 
-GRU model se ne pokrece podrazumevano zato sto zahteva PyTorch okruzenje i moze
+GRU model se ne pokrece podrazumevano zato što zahteva PyTorch okruženje i može
 da koristi CUDA/GPU podrsku.
 
-Nakon sto se zavrsi osnovni pipeline, GRU se trenira eksplicitno:
+Nakon što se završi osnovni pipeline, GRU se trenira eksplicitno:
 
 ```bash
 uv run main.py gru-pipeline
