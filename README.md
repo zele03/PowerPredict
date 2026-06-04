@@ -1,6 +1,6 @@
 # PowerPredict
 
-PowerPredict je studentski projekat za predikciju potrosnje električne energije
+PowerPredict je studentski projekat za predikciju potrošnje električne energije
 domaćinstva na osnovu Household Power Consumption dataset-a.
 
 Sistem predviđa potrošnju energije po satima i evaluira modele nad validation i
