@@ -639,11 +639,13 @@ def save_best_gru_outputs(best_result):
     """
     Cuva summary najboljeg GRU modela i compare report sa baseline modelom.
     """
-    logs_dir = Path("data/logs")
-    logs_dir.mkdir(parents=True, exist_ok=True)
+    gru_logs_dir = Path("data/logs/gru_logs")
+    compare_logs_dir = Path("data/logs/compare_logs")
+    gru_logs_dir.mkdir(parents=True, exist_ok=True)
+    compare_logs_dir.mkdir(parents=True, exist_ok=True)
 
     best_summary_df = create_best_gru_summary(best_result)
-    best_summary_df.to_csv(logs_dir / "best_gru_model_summary.csv", index=False)
+    best_summary_df.to_csv(gru_logs_dir / "best_gru_model_summary.csv", index=False)
 
     baseline_report_df = load_baseline_report()
     if baseline_report_df is None:
@@ -661,7 +663,10 @@ def save_best_gru_outputs(best_result):
         best_gru_test_report_df,
         best_result["config"]["name"],
     )
-    compare_report_df.to_csv(logs_dir / "baseline_gru_compare_report.csv", index=False)
+    compare_report_df.to_csv(
+        compare_logs_dir / "baseline_gru_compare_report.csv",
+        index=False,
+    )
 
     return compare_report_df
 
@@ -683,8 +688,8 @@ def save_outputs(
     Cuva model, istoriju treninga, predikcije i GRU report.
     """
     models_dir = Path("models")
-    logs_dir = Path("data/logs")
-    predictions_dir = Path("data/predictions")
+    logs_dir = Path("data/logs/gru_logs")
+    predictions_dir = Path("data/predictions/gru_predictions")
 
     models_dir.mkdir(parents=True, exist_ok=True)
     logs_dir.mkdir(parents=True, exist_ok=True)
@@ -883,7 +888,7 @@ def create_gru_models():
         reports.append(result["report_df"])
 
     combined_report_df = pd.concat(reports, ignore_index=True)
-    logs_dir = Path("data/logs")
+    logs_dir = Path("data/logs/gru_logs")
     logs_dir.mkdir(parents=True, exist_ok=True)
     combined_report_df.to_csv(logs_dir / "gru_hyperparameter_report.csv", index=False)
     create_gru_model_summaries(results).to_csv(

@@ -17,7 +17,7 @@ def load_model_summaries():
     """
     Ucitava indeks svih GRU modela ako ga je step06 napravio.
     """
-    summaries_path = Path("data/logs/gru_model_summaries.csv")
+    summaries_path = Path("data/logs/gru_logs/gru_model_summaries.csv")
 
     if not summaries_path.exists():
         return pd.DataFrame()
@@ -33,7 +33,7 @@ def get_gru_model_names():
     if not summaries_df.empty:
         return summaries_df["Model"].tolist()
 
-    report_paths = Path("data/logs").glob("*_report.csv")
+    report_paths = Path("data/logs/gru_logs").glob("*_report.csv")
     excluded_names = {
         "baseline",
         "baseline_gru_compare",
@@ -103,8 +103,10 @@ def load_gru_outputs(model_name):
     """
     Ucitava GRU predikcije i report za jedan model.
     """
-    predictions_path = Path(f"data/predictions/{model_name}_test_predictions.csv")
-    report_path = Path(f"data/logs/{model_name}_report.csv")
+    predictions_path = Path(
+        f"data/predictions/gru_predictions/{model_name}_test_predictions.csv"
+    )
+    report_path = Path(f"data/logs/gru_logs/{model_name}_report.csv")
 
     predictions_df = pd.read_csv(predictions_path, parse_dates=["datetime"])
     report_df = pd.read_csv(report_path)
@@ -116,7 +118,7 @@ def load_best_gru_model_name():
     """
     Vraca naziv najboljeg GRU modela iz step06 outputa.
     """
-    best_summary_path = Path("data/logs/best_gru_model_summary.csv")
+    best_summary_path = Path("data/logs/gru_logs/best_gru_model_summary.csv")
 
     if best_summary_path.exists():
         best_summary_df = pd.read_csv(best_summary_path)
