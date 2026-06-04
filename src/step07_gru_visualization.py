@@ -7,22 +7,131 @@ import pandas as pd
 
 TARGET_COLUMN = "Energy_kWh"
 BASELINE_COLUMN = "lag_24h"
+BASELINE_MODEL_NAME = "Baseline lag_24h"
 ERROR_BIN_WIDTH = 0.1
 ERROR_X_TICK_STEP = 0.5
 ERROR_Y_TICK_STEP = 200
 
 
-def load_gru_outputs():
+def load_model_summaries():
     """
-    Ucitava GRU predikcije i report.
+    Ucitava indeks svih GRU modela ako ga je step06 napravio.
     """
-    predictions_path = Path("data/predictions/gru_test_predictions.csv")
-    report_path = Path("data/logs/gru_report.csv")
+    summaries_path = Path("data/logs/gru_model_summaries.csv")
+
+    if not summaries_path.exists():
+        return pd.DataFrame()
+
+    return pd.read_csv(summaries_path)
+
+
+def get_gru_model_names():
+    """
+    Vraca nazive svih GRU modela za koje postoje reportovi.
+    """
+    summaries_df = load_model_summaries()
+    if not summaries_df.empty:
+        return summaries_df["Model"].tolist()
+
+    report_paths = Path("data/logs").glob("*_report.csv")
+    excluded_names = {
+        "baseline",
+        "baseline_gru_compare",
+        "gru_hyperparameter",
+    }
+    model_names = []
+
+    for report_path in report_paths:
+        model_name = report_path.stem.removesuffix("_report")
+        if model_name not in excluded_names:
+            model_names.append(model_name)
+
+    return sorted(model_names)
+
+
+def get_model_summary_row(model_name):
+    """
+    Vraca summary red sa hiperparametrima za trazeni GRU model.
+    """
+    summaries_df = load_model_summaries()
+
+    if summaries_df.empty:
+        return None
+
+    matching_rows = summaries_df[summaries_df["Model"] == model_name]
+    if matching_rows.empty:
+        return None
+
+    return matching_rows.iloc[0]
+
+
+def get_graph_details(model_name):
+    """
+    Pravi tekst koji se ispisuje na grafovima.
+    """
+    summary_row = get_model_summary_row(model_name)
+
+    if summary_row is None:
+        return f"Model: {model_name}"
+
+    return (
+        f"Model: {model_name}\n"
+        f"seq={summary_row['sequence_length']} | "
+        f"hidden={summary_row['hidden_size']} | "
+        f"layers={summary_row['num_layers']} | "
+        f"dropout={summary_row['dropout']} | "
+        f"lr={summary_row['learning_rate']} | "
+        f"batch={summary_row['batch_size']}\n"
+        f"validation MAE={summary_row['validation_MAE']} | "
+        f"test MAE={summary_row['test_MAE']} | "
+        f"test RMSE={summary_row['test_RMSE']} | "
+        f"test WAPE={summary_row['test_WAPE']}"
+    )
+
+
+def add_graph_details(fig, details, extra_text=None):
+    """
+    Dodaje opis modela na sam graf.
+    """
+    if extra_text:
+        details = f"{details}\n{extra_text}"
+
+    fig.text(0.01, 0.01, details, ha="left", va="bottom", fontsize=8)
+
+
+def load_gru_outputs(model_name):
+    """
+    Ucitava GRU predikcije i report za jedan model.
+    """
+    predictions_path = Path(f"data/predictions/{model_name}_test_predictions.csv")
+    report_path = Path(f"data/logs/{model_name}_report.csv")
 
     predictions_df = pd.read_csv(predictions_path, parse_dates=["datetime"])
     report_df = pd.read_csv(report_path)
 
     return predictions_df, report_df
+
+
+def load_best_gru_model_name():
+    """
+    Vraca naziv najboljeg GRU modela iz step06 outputa.
+    """
+    best_summary_path = Path("data/logs/best_gru_model_summary.csv")
+
+    if best_summary_path.exists():
+        best_summary_df = pd.read_csv(best_summary_path)
+        return best_summary_df.iloc[0]["Model"]
+
+    summaries_df = load_model_summaries()
+    if not summaries_df.empty:
+        best_index = summaries_df["validation_MAE"].astype(float).idxmin()
+        return summaries_df.loc[best_index, "Model"]
+
+    model_names = get_gru_model_names()
+    if not model_names:
+        raise FileNotFoundError("Nije pronadjen nijedan GRU report za crtanje.")
+
+    return model_names[0]
 
 
 def load_baseline_outputs():
@@ -110,7 +219,7 @@ def apply_error_axis_config(ax, axis_config):
     ax.set_yticks(axis_config["y_ticks"])
 
 
-def plot_hourly_metric(report_df, metric, graphs_dir):
+def plot_hourly_metric(report_df, metric, graphs_dir, model_name, details):
     """
     Prikazuje hourly metriku za test skup.
     """
@@ -120,23 +229,30 @@ def plot_hourly_metric(report_df, metric, graphs_dir):
     ].copy()
 
     fig, ax = plt.subplots(figsize=(12, 5))
-
     ax.bar(hourly_df["Hour"], hourly_df[metric], color="tab:green")
 
-    ax.set_title(f"GRU hourly {metric} - test")
+    ax.set_title(f"GRU hourly {metric} - test - {model_name}")
     ax.set_xlabel("Hour")
     ax.set_ylabel(metric)
     ax.set_xticks(range(24))
     ax.grid(True, axis="y", alpha=0.3)
+    add_graph_details(fig, details)
 
-    fig.tight_layout()
-    fig.savefig(graphs_dir / f"gru_test_hourly_{metric.lower()}.png")
+    fig.tight_layout(rect=(0, 0.12, 1, 1))
+    fig.savefig(graphs_dir / f"{model_name}_test_hourly_{metric.lower()}.png")
     plt.close(fig)
 
 
-def plot_compare_hourly_metric(baseline_report_df, gru_report_df, metric, graphs_dir):
+def plot_compare_hourly_metric(
+    baseline_report_df,
+    gru_report_df,
+    metric,
+    graphs_dir,
+    model_name,
+    details,
+):
     """
-    Prikazuje baseline i GRU hourly metriku za test skup na istom grafiku.
+    Prikazuje baseline i najbolji GRU hourly metriku za test skup.
     """
     baseline_hourly_df = baseline_report_df[
         (baseline_report_df["Report_Type"] == "hourly")
@@ -161,30 +277,33 @@ def plot_compare_hourly_metric(baseline_report_df, gru_report_df, metric, graphs
         hours - bar_width / 2,
         compare_df[f"{metric}_baseline"],
         width=bar_width,
-        label="Baseline lag_24h",
+        label=BASELINE_MODEL_NAME,
         color="tab:blue",
     )
     ax.bar(
         hours + bar_width / 2,
         compare_df[f"{metric}_gru"],
         width=bar_width,
-        label="GRU",
+        label=f"Best GRU: {model_name}",
         color="tab:green",
     )
 
-    ax.set_title(f"Baseline vs GRU hourly {metric} - test")
+    ax.set_title(f"Baseline vs best GRU hourly {metric} - test")
     ax.set_xlabel("Hour")
     ax.set_ylabel(metric)
     ax.set_xticks(range(24))
     ax.legend()
     ax.grid(True, axis="y", alpha=0.3)
+    add_graph_details(fig, details, "Comparison: baseline lag_24h vs best GRU")
 
-    fig.tight_layout()
-    fig.savefig(graphs_dir / f"baseline_gru_compare_test_hourly_{metric.lower()}.png")
+    fig.tight_layout(rect=(0, 0.14, 1, 1))
+    fig.savefig(
+        graphs_dir / f"best_{model_name}_baseline_gru_compare_test_hourly_{metric.lower()}.png"
+    )
     plt.close(fig)
 
 
-def plot_actual_vs_predicted_scatter(predictions_df, graphs_dir):
+def plot_actual_vs_predicted_scatter(predictions_df, graphs_dir, model_name, details):
     """
     Prikazuje odnos stvarnih i predvidjenih vrednosti.
     """
@@ -208,19 +327,20 @@ def plot_actual_vs_predicted_scatter(predictions_df, graphs_dir):
     )
     ax.plot([min_value, max_value], [min_value, max_value], color="tab:red")
 
-    ax.set_title("GRU actual vs predicted scatter - test")
+    ax.set_title(f"GRU actual vs predicted scatter - test - {model_name}")
     ax.set_xlabel("Actual Energy_kWh")
     ax.set_ylabel("Predicted Energy_kWh")
     ax.grid(True, alpha=0.3)
+    add_graph_details(fig, details)
 
-    fig.tight_layout()
-    fig.savefig(graphs_dir / "gru_test_actual_vs_predicted_scatter.png")
+    fig.tight_layout(rect=(0, 0.14, 1, 1))
+    fig.savefig(graphs_dir / f"{model_name}_test_actual_vs_predicted_scatter.png")
     plt.close(fig)
 
 
-def plot_compare_actual_vs_predicted_scatter(compare_df, graphs_dir):
+def plot_compare_actual_vs_predicted_scatter(compare_df, graphs_dir, model_name, details):
     """
-    Prikazuje odnos stvarnih i predvidjenih vrednosti za baseline i GRU.
+    Prikazuje odnos stvarnih i predvidjenih vrednosti za baseline i najbolji GRU.
     """
     fig, ax = plt.subplots(figsize=(7, 7))
 
@@ -229,7 +349,7 @@ def plot_compare_actual_vs_predicted_scatter(compare_df, graphs_dir):
         compare_df["baseline_predicted_Energy_kWh"],
         alpha=0.28,
         s=12,
-        label="Baseline lag_24h",
+        label=BASELINE_MODEL_NAME,
         color="tab:blue",
     )
     ax.scatter(
@@ -237,7 +357,7 @@ def plot_compare_actual_vs_predicted_scatter(compare_df, graphs_dir):
         compare_df["gru_predicted_Energy_kWh"],
         alpha=0.28,
         s=12,
-        label="GRU",
+        label=f"Best GRU: {model_name}",
         color="tab:green",
     )
 
@@ -253,20 +373,22 @@ def plot_compare_actual_vs_predicted_scatter(compare_df, graphs_dir):
     )
     ax.plot([min_value, max_value], [min_value, max_value], color="tab:red")
 
-    ax.set_title("Baseline vs GRU actual vs predicted scatter - test")
+    ax.set_title("Baseline vs best GRU actual vs predicted scatter - test")
     ax.set_xlabel("Actual Energy_kWh")
     ax.set_ylabel("Predicted Energy_kWh")
     ax.legend()
     ax.grid(True, alpha=0.3)
+    add_graph_details(fig, details, "Comparison: baseline lag_24h vs best GRU")
 
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.16, 1, 1))
     fig.savefig(
-        graphs_dir / "baseline_gru_compare_test_actual_vs_predicted_scatter.png"
+        graphs_dir
+        / f"best_{model_name}_baseline_gru_compare_test_actual_vs_predicted_scatter.png"
     )
     plt.close(fig)
 
 
-def plot_error_distribution(predictions_df, graphs_dir, axis_config):
+def plot_error_distribution(predictions_df, graphs_dir, axis_config, model_name, details):
     """
     Prikazuje distribuciju apsolutnih gresaka GRU modela.
     """
@@ -279,20 +401,21 @@ def plot_error_distribution(predictions_df, graphs_dir, axis_config):
         edgecolor="black",
     )
 
-    ax.set_title("GRU error distribution - test")
+    ax.set_title(f"GRU error distribution - test - {model_name}")
     ax.set_xlabel("Absolute error (kWh)")
     ax.set_ylabel("Number of hours")
     apply_error_axis_config(ax, axis_config)
     ax.grid(True, axis="y", alpha=0.3)
+    add_graph_details(fig, details)
 
-    fig.tight_layout()
-    fig.savefig(graphs_dir / "gru_test_error_distribution.png")
+    fig.tight_layout(rect=(0, 0.14, 1, 1))
+    fig.savefig(graphs_dir / f"{model_name}_test_error_distribution.png")
     plt.close(fig)
 
 
-def plot_compare_error_distribution(compare_df, graphs_dir, axis_config):
+def plot_compare_error_distribution(compare_df, graphs_dir, axis_config, model_name, details):
     """
-    Prikazuje distribuciju apsolutnih gresaka za baseline i GRU.
+    Prikazuje distribuciju apsolutnih gresaka za baseline i najbolji GRU.
     """
     fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -300,76 +423,93 @@ def plot_compare_error_distribution(compare_df, graphs_dir, axis_config):
     baseline_counts, _ = np.histogram(compare_df["baseline_absolute_error"], bins=bins)
     gru_counts, _ = np.histogram(compare_df["gru_absolute_error"], bins=bins)
     bin_width = bins[1] - bins[0]
-    baseline_positions = bins[:-1]
-    gru_positions = bins[:-1] + bin_width / 2
 
     ax.bar(
-        baseline_positions,
+        bins[:-1],
         baseline_counts,
         width=bin_width / 2,
         align="edge",
-        label="Baseline lag_24h",
+        label=BASELINE_MODEL_NAME,
         color="tab:blue",
         edgecolor="black",
     )
     ax.bar(
-        gru_positions,
+        bins[:-1] + bin_width / 2,
         gru_counts,
         width=bin_width / 2,
         align="edge",
-        label="GRU",
+        label=f"Best GRU: {model_name}",
         color="tab:green",
         edgecolor="black",
     )
 
-    ax.set_title("Baseline vs GRU error distribution - test")
+    ax.set_title("Baseline vs best GRU error distribution - test")
     ax.set_xlabel("Absolute error (kWh)")
     ax.set_ylabel("Number of hours")
     ax.legend()
     apply_error_axis_config(ax, axis_config)
     ax.grid(True, axis="y", alpha=0.3)
+    add_graph_details(fig, details, "Comparison: baseline lag_24h vs best GRU")
 
-    fig.tight_layout()
-    fig.savefig(graphs_dir / "baseline_gru_compare_test_error_distribution.png")
+    fig.tight_layout(rect=(0, 0.16, 1, 1))
+    fig.savefig(
+        graphs_dir / f"best_{model_name}_baseline_gru_compare_test_error_distribution.png"
+    )
     plt.close(fig)
 
 
 def create_gru_graphs():
     """
-    Kreira graficke prikaze GRU modela za test skup.
+    Kreira 4 graficka prikaza za svaki GRU model iz step06.
     """
     graphs_dir = Path("data/graphs/gru_graphs")
     graphs_dir.mkdir(parents=True, exist_ok=True)
 
-    predictions_df, report_df = load_gru_outputs()
     baseline_test_df, _ = load_baseline_outputs()
     baseline_test_df = baseline_test_df.copy()
     baseline_test_df["absolute_error"] = (
         baseline_test_df[TARGET_COLUMN] - baseline_test_df[BASELINE_COLUMN]
     ).abs()
-    error_axis_config = create_error_axis_config(
-        [
-            baseline_test_df["absolute_error"].to_numpy(),
-            predictions_df["absolute_error"].to_numpy(),
-        ]
-    )
 
-    plot_hourly_metric(report_df, "WAPE", graphs_dir)
-    plot_hourly_metric(report_df, "MAE", graphs_dir)
-    plot_actual_vs_predicted_scatter(predictions_df, graphs_dir)
-    plot_error_distribution(predictions_df, graphs_dir, error_axis_config)
+    for model_name in get_gru_model_names():
+        predictions_df, report_df = load_gru_outputs(model_name)
+        details = get_graph_details(model_name)
+        error_axis_config = create_error_axis_config(
+            [
+                baseline_test_df["absolute_error"].to_numpy(),
+                predictions_df["absolute_error"].to_numpy(),
+            ]
+        )
+
+        plot_hourly_metric(report_df, "WAPE", graphs_dir, model_name, details)
+        plot_hourly_metric(report_df, "MAE", graphs_dir, model_name, details)
+        plot_actual_vs_predicted_scatter(
+            predictions_df,
+            graphs_dir,
+            model_name,
+            details,
+        )
+        plot_error_distribution(
+            predictions_df,
+            graphs_dir,
+            error_axis_config,
+            model_name,
+            details,
+        )
 
 
 def create_baseline_gru_compare_graphs():
     """
-    Kreira uporedne graficke prikaze baseline i GRU modela za test skup.
+    Kreira 4 uporedna grafa za baseline i najbolji GRU model.
     """
     graphs_dir = Path("data/graphs/baseline_gru_compare_graphs")
     graphs_dir.mkdir(parents=True, exist_ok=True)
 
-    gru_predictions_df, gru_report_df = load_gru_outputs()
+    best_model_name = load_best_gru_model_name()
+    gru_predictions_df, gru_report_df = load_gru_outputs(best_model_name)
     baseline_test_df, baseline_report_df = load_baseline_outputs()
     compare_df = create_compare_predictions_df(baseline_test_df, gru_predictions_df)
+    details = get_graph_details(best_model_name)
     error_axis_config = create_error_axis_config(
         [
             compare_df["baseline_absolute_error"].to_numpy(),
@@ -377,10 +517,35 @@ def create_baseline_gru_compare_graphs():
         ]
     )
 
-    plot_compare_hourly_metric(baseline_report_df, gru_report_df, "WAPE", graphs_dir)
-    plot_compare_hourly_metric(baseline_report_df, gru_report_df, "MAE", graphs_dir)
-    plot_compare_actual_vs_predicted_scatter(compare_df, graphs_dir)
-    plot_compare_error_distribution(compare_df, graphs_dir, error_axis_config)
+    plot_compare_hourly_metric(
+        baseline_report_df,
+        gru_report_df,
+        "WAPE",
+        graphs_dir,
+        best_model_name,
+        details,
+    )
+    plot_compare_hourly_metric(
+        baseline_report_df,
+        gru_report_df,
+        "MAE",
+        graphs_dir,
+        best_model_name,
+        details,
+    )
+    plot_compare_actual_vs_predicted_scatter(
+        compare_df,
+        graphs_dir,
+        best_model_name,
+        details,
+    )
+    plot_compare_error_distribution(
+        compare_df,
+        graphs_dir,
+        error_axis_config,
+        best_model_name,
+        details,
+    )
 
 
 if __name__ == "__main__":

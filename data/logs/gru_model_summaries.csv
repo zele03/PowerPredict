@@ -1,0 +1,4 @@
+Model,sequence_length,batch_size,hidden_size,num_layers,dropout,learning_rate,max_epochs,patience,test_WAPE,test_MAE,test_RMSE,test_MAPE,test_sMAPE
+gru_seq24_h32_l1_d0_lr0.001_bs64,24,64,32,1,0.0,0.001,80,10,35.152,0.3372,0.481,45.7823,36.3957
+gru_seq24_h64_l2_d0.2_lr0.001_bs64,24,64,64,2,0.2,0.001,80,10,35.5585,0.3411,0.4856,46.3892,36.6904
+gru_seq24_h128_l2_d0.3_lr0.0005_bs64,24,64,128,2,0.3,0.0005,80,10,34.9605,0.3354,0.4819,43.6614,36.1798

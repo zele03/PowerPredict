@@ -1,0 +1,2 @@
+Model,selection_metric,sequence_length,batch_size,hidden_size,num_layers,dropout,learning_rate,max_epochs,patience,test_WAPE,test_MAE,test_RMSE,test_MAPE,test_sMAPE
+gru_seq24_h128_l2_d0.3_lr0.0005_bs64,test_MAE,24,64,128,2,0.3,0.0005,80,10,34.9605,0.3354,0.4819,43.6614,36.1798

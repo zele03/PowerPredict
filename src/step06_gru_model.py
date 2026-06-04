@@ -5,19 +5,57 @@ import numpy as np
 import pandas as pd
 
 
-TARGET_COLUMN = "Energy_kWh"    # Kolona koju model pokusava da predvidi
-MODEL_NAME = "GRU"              # Naziv modela koji se upisuje u report
+TARGET_COLUMN = "Energy_kWh"  # Kolona koju model pokusava da predvidi
+MODEL_NAME = "GRU"
 BASELINE_MODEL_NAME = "Baseline lag_24h"
-SEQUENCE_LENGTH = 24            # Broj prethodnih sati koje GRU koristi za jednu predikciju
-BATCH_SIZE = 64                 # Broj sekvenci koje model obradjuje odjednom tokom treninga
-HIDDEN_SIZE = 64                # Velicina skrivene memorije GRU sloja
-NUM_LAYERS = 2                  # Broj naslaganih GRU slojeva
-DROPOUT = 0.2                   # Regularizacija koja smanjuje overfitting izmedju GRU slojeva
-LEARNING_RATE = 0.001           # Brzina kojom optimizer menja tezine modela
-MAX_EPOCHS = 80                 # Maksimalan broj epoha treninga
-PATIENCE = 10                   # Broj epoha bez poboljsanja nakon kog se trening zaustavlja
-RANDOM_SEED = 42                # Seed za ponovljivost rezultata
-PERCENTAGE_MULTIPLIER = 100     # Koristi se da procentualne metrike budu u procentima
+RANDOM_SEED = 42  # Seed za ponovljivost rezultata
+PERCENTAGE_MULTIPLIER = 100  # Koristi se da procentualne metrike budu u procentima
+
+DEFAULT_SEQUENCE_LENGTH = 24  # Podrazumevani broj prethodnih sati za jednu predikciju
+DEFAULT_BATCH_SIZE = 64  # Podrazumevani broj sekvenci u jednom trening batch-u
+DEFAULT_HIDDEN_SIZE = 64  # Podrazumevana velicina skrivene memorije GRU sloja
+DEFAULT_NUM_LAYERS = 2  # Podrazumevani broj naslaganih GRU slojeva
+DEFAULT_DROPOUT = 0.2  # Podrazumevana dropout regularizacija
+DEFAULT_LEARNING_RATE = 0.001  # Podrazumevana brzina ucenja optimizatora
+DEFAULT_MAX_EPOCHS = 80  # Podrazumevani maksimalan broj epoha treninga
+DEFAULT_PATIENCE = 10  # Podrazumevani early stopping patience
+
+
+HYPERPARAMETER_CONFIGS = [
+    {
+        "name": "gru_seq24_h32_l1_d0_lr0.001_bs64",
+        "sequence_length": 24,
+        "batch_size": 64,
+        "hidden_size": 32,
+        "num_layers": 1,
+        "dropout": 0.0,
+        "learning_rate": 0.001,
+        "max_epochs": 80,
+        "patience": 10,
+    },
+    {
+        "name": "gru_seq24_h64_l2_d0.2_lr0.001_bs64",
+        "sequence_length": 24,
+        "batch_size": 64,
+        "hidden_size": 64,
+        "num_layers": 2,
+        "dropout": 0.2,
+        "learning_rate": 0.001,
+        "max_epochs": 80,
+        "patience": 10,
+    },
+    {
+        "name": "gru_seq24_h128_l2_d0.3_lr0.0005_bs64",
+        "sequence_length": 24,
+        "batch_size": 64,
+        "hidden_size": 128,
+        "num_layers": 2,
+        "dropout": 0.3,
+        "learning_rate": 0.0005,
+        "max_epochs": 80,
+        "patience": 10,
+    },
+]
 
 EXCLUDED_FEATURE_COLUMNS = [
     "datetime",
@@ -120,7 +158,7 @@ def create_sequences(
     feature_columns,
     feature_scaler,
     target_scaler,
-    sequence_length=SEQUENCE_LENGTH,
+    sequence_length=DEFAULT_SEQUENCE_LENGTH,
 ):
     """
     Kreira GRU sekvence koristeci istoriju iz context_df i targete iz eval_df.
@@ -171,7 +209,7 @@ def create_sequences(
     )
 
 
-def build_gru_model_class(nn):
+def build_gru_model_class(nn, config):
     """
     Kreira GRU model klasu nakon sto je torch dostupan.
     """
@@ -181,12 +219,12 @@ def build_gru_model_class(nn):
             super().__init__()
             self.gru = nn.GRU(
                 input_size=input_size,
-                hidden_size=HIDDEN_SIZE,
-                num_layers=NUM_LAYERS,
+                hidden_size=config["hidden_size"],
+                num_layers=config["num_layers"],
                 batch_first=True,
-                dropout=DROPOUT if NUM_LAYERS > 1 else 0,
+                dropout=config["dropout"] if config["num_layers"] > 1 else 0,
             )
-            self.output_layer = nn.Linear(HIDDEN_SIZE, 1)
+            self.output_layer = nn.Linear(config["hidden_size"], 1)
 
         def forward(self, x):
             output, _ = self.gru(x)
@@ -257,19 +295,23 @@ def evaluate_loss(torch, model, data_loader, loss_fn, device):
     return float(np.mean(losses))
 
 
-def train_gru_model(model, train_loader, validation_loader, device, torch, nn):
+def train_gru_model(model, train_loader, validation_loader, device, torch, nn, config):
     """
     Trenira GRU model sa early stopping logikom.
     """
     loss_fn = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config["learning_rate"])
 
     best_validation_loss = float("inf")
     best_state_dict = None
     epochs_without_improvement = 0
     history_rows = []
 
-    progress_bar = trange(1, MAX_EPOCHS + 1, desc="Training GRU model")
+    progress_bar = trange(
+        1,
+        config["max_epochs"] + 1,
+        desc=f"Training {config['name']}",
+    )
 
     for epoch in progress_bar:
         train_loss = train_one_epoch(
@@ -313,7 +355,7 @@ def train_gru_model(model, train_loader, validation_loader, device, torch, nn):
             f"Best: {best_validation_loss:.4f}"
         )
 
-        if epochs_without_improvement >= PATIENCE:
+        if epochs_without_improvement >= config["patience"]:
             break
 
     model.load_state_dict(best_state_dict)
@@ -372,7 +414,7 @@ def calculate_metrics(y_true, y_pred):
     }
 
 
-def create_prediction_report(predictions_df, dataset_name):
+def create_prediction_report(predictions_df, dataset_name, model_name=MODEL_NAME):
     """
     Kreira summary i hourly report za GRU predikcije.
     """
@@ -384,7 +426,7 @@ def create_prediction_report(predictions_df, dataset_name):
         {
             "Report_Type": "summary",
             "Dataset": dataset_name,
-            "Model": MODEL_NAME,
+            "Model": model_name,
             "Hour": "",
             **summary_metrics,
             "Broj_redova": len(predictions_df),
@@ -403,7 +445,7 @@ def create_prediction_report(predictions_df, dataset_name):
             {
                 "Report_Type": "hourly",
                 "Dataset": dataset_name,
-                "Model": MODEL_NAME,
+                "Model": model_name,
                 "Hour": int(hour),
                 **hourly_metrics,
                 "Broj_redova": len(hour_df),
@@ -425,9 +467,11 @@ def load_baseline_report():
     return pd.read_csv(report_path)
 
 
-def create_baseline_gru_compare_report(baseline_report_df, gru_report_df):
+def create_baseline_gru_compare_report(
+    baseline_report_df, gru_report_df, model_name=MODEL_NAME
+):
     """
-    Kreira uporedni report sa baseline i GRU metrikama u istom redu.
+    Kreira kompaktan uporedni report sa baseline i GRU metrikama.
     """
     baseline_df = baseline_report_df.copy()
     gru_df = gru_report_df.copy()
@@ -435,7 +479,7 @@ def create_baseline_gru_compare_report(baseline_report_df, gru_report_df):
     baseline_df["Model"] = BASELINE_MODEL_NAME
     baseline_df = baseline_df.drop(columns=["Baseline"], errors="ignore")
 
-    metric_columns = ["WAPE", "MAE", "RMSE", "MAPE", "sMAPE"]
+    metric_columns = ["MAE", "RMSE", "WAPE"]
     key_columns = ["Report_Type", "Dataset", "Hour"]
 
     baseline_metrics = baseline_df[
@@ -454,6 +498,9 @@ def create_baseline_gru_compare_report(baseline_report_df, gru_report_df):
     )
 
     compare_df = baseline_metrics.merge(gru_metrics, on=key_columns, how="inner")
+    compare_df["Broj_redova"] = compare_df[
+        ["Baseline_Broj_redova", "GRU_Broj_redova"]
+    ].min(axis=1)
 
     for metric in metric_columns:
         difference_column = f"{metric}_Difference_Baseline_minus_GRU"
@@ -466,7 +513,157 @@ def create_baseline_gru_compare_report(baseline_report_df, gru_report_df):
             compare_df[difference_column] / compare_df[f"Baseline_{metric}"] * 100
         ).round(4)
 
-    return compare_df
+    compare_df["Better_Model_by_MAE"] = np.where(
+        compare_df["MAE_Difference_Baseline_minus_GRU"] > 0,
+        model_name,
+        BASELINE_MODEL_NAME,
+    )
+
+    output_columns = [
+        "Report_Type",
+        "Dataset",
+        "Hour",
+        "Broj_redova",
+        "Better_Model_by_MAE",
+        "Baseline_MAE",
+        "GRU_MAE",
+        "MAE_Improvement_percent",
+        "Baseline_RMSE",
+        "GRU_RMSE",
+        "RMSE_Improvement_percent",
+        "Baseline_WAPE",
+        "GRU_WAPE",
+        "WAPE_Improvement_percent",
+    ]
+
+    return compare_df[output_columns]
+
+
+def get_summary_metric(report_df, dataset_name, metric):
+    """
+    Vraca summary metriku za trazeni skup.
+    """
+    summary_row = report_df[
+        (report_df["Report_Type"] == "summary") & (report_df["Dataset"] == dataset_name)
+    ].iloc[0]
+
+    return float(summary_row[metric])
+
+
+def create_best_gru_summary(best_result):
+    """
+    Kreira kratak zapis o najboljoj GRU konfiguraciji.
+    """
+    config = best_result["config"]
+    report_df = best_result["report_df"]
+    validation_summary = report_df[
+        (report_df["Report_Type"] == "summary") & (report_df["Dataset"] == "validation")
+    ].iloc[0]
+    test_summary = report_df[
+        (report_df["Report_Type"] == "summary") & (report_df["Dataset"] == "test")
+    ].iloc[0]
+
+    return pd.DataFrame(
+        [
+            {
+                "Model": config["name"],
+                "selection_metric": "validation_MAE",
+                "sequence_length": config["sequence_length"],
+                "batch_size": config["batch_size"],
+                "hidden_size": config["hidden_size"],
+                "num_layers": config["num_layers"],
+                "dropout": config["dropout"],
+                "learning_rate": config["learning_rate"],
+                "max_epochs": config["max_epochs"],
+                "patience": config["patience"],
+                "validation_WAPE": validation_summary["WAPE"],
+                "validation_MAE": validation_summary["MAE"],
+                "validation_RMSE": validation_summary["RMSE"],
+                "validation_MAPE": validation_summary["MAPE"],
+                "validation_sMAPE": validation_summary["sMAPE"],
+                "test_WAPE": test_summary["WAPE"],
+                "test_MAE": test_summary["MAE"],
+                "test_RMSE": test_summary["RMSE"],
+                "test_MAPE": test_summary["MAPE"],
+                "test_sMAPE": test_summary["sMAPE"],
+            }
+        ]
+    )
+
+
+def create_gru_model_summaries(results):
+    """
+    Kreira tabelu sa hiperparametrima i test metrikama svih GRU modela.
+    """
+    summary_rows = []
+
+    for result in results:
+        config = result["config"]
+        report_df = result["report_df"]
+        validation_summary = report_df[
+            (report_df["Report_Type"] == "summary")
+            & (report_df["Dataset"] == "validation")
+        ].iloc[0]
+        test_summary = report_df[
+            (report_df["Report_Type"] == "summary") & (report_df["Dataset"] == "test")
+        ].iloc[0]
+
+        summary_rows.append(
+            {
+                "Model": config["name"],
+                "sequence_length": config["sequence_length"],
+                "batch_size": config["batch_size"],
+                "hidden_size": config["hidden_size"],
+                "num_layers": config["num_layers"],
+                "dropout": config["dropout"],
+                "learning_rate": config["learning_rate"],
+                "max_epochs": config["max_epochs"],
+                "patience": config["patience"],
+                "validation_WAPE": validation_summary["WAPE"],
+                "validation_MAE": validation_summary["MAE"],
+                "validation_RMSE": validation_summary["RMSE"],
+                "validation_MAPE": validation_summary["MAPE"],
+                "validation_sMAPE": validation_summary["sMAPE"],
+                "test_WAPE": test_summary["WAPE"],
+                "test_MAE": test_summary["MAE"],
+                "test_RMSE": test_summary["RMSE"],
+                "test_MAPE": test_summary["MAPE"],
+                "test_sMAPE": test_summary["sMAPE"],
+            }
+        )
+
+    return pd.DataFrame(summary_rows)
+
+
+def save_best_gru_outputs(best_result):
+    """
+    Cuva summary najboljeg GRU modela i compare report sa baseline modelom.
+    """
+    logs_dir = Path("data/logs")
+    logs_dir.mkdir(parents=True, exist_ok=True)
+
+    best_summary_df = create_best_gru_summary(best_result)
+    best_summary_df.to_csv(logs_dir / "best_gru_model_summary.csv", index=False)
+
+    baseline_report_df = load_baseline_report()
+    if baseline_report_df is None:
+        return None
+
+    baseline_test_report_df = baseline_report_df[
+        baseline_report_df["Dataset"] == "test"
+    ].copy()
+    best_gru_test_report_df = best_result["report_df"][
+        best_result["report_df"]["Dataset"] == "test"
+    ].copy()
+
+    compare_report_df = create_baseline_gru_compare_report(
+        baseline_test_report_df,
+        best_gru_test_report_df,
+        best_result["config"]["name"],
+    )
+    compare_report_df.to_csv(logs_dir / "baseline_gru_compare_report.csv", index=False)
+
+    return compare_report_df
 
 
 def save_outputs(
@@ -480,6 +677,7 @@ def save_outputs(
     test_predictions_df,
     report_df,
     compare_report_df=None,
+    config=None,
 ):
     """
     Cuva model, istoriju treninga, predikcije i GRU report.
@@ -492,37 +690,54 @@ def save_outputs(
     logs_dir.mkdir(parents=True, exist_ok=True)
     predictions_dir.mkdir(parents=True, exist_ok=True)
 
+    config = config or {
+        "name": "gru_model",
+        "sequence_length": DEFAULT_SEQUENCE_LENGTH,
+        "batch_size": DEFAULT_BATCH_SIZE,
+        "hidden_size": DEFAULT_HIDDEN_SIZE,
+        "num_layers": DEFAULT_NUM_LAYERS,
+        "dropout": DEFAULT_DROPOUT,
+        "learning_rate": DEFAULT_LEARNING_RATE,
+        "max_epochs": DEFAULT_MAX_EPOCHS,
+        "patience": DEFAULT_PATIENCE,
+    }
+    output_name = config["name"]
+
     checkpoint = {
         "model_state_dict": model.state_dict(),
         "feature_columns": feature_columns,
         "feature_scaler": feature_scaler.to_dict(),
         "target_scaler": target_scaler.to_dict(),
-        "sequence_length": SEQUENCE_LENGTH,
-        "hidden_size": HIDDEN_SIZE,
-        "num_layers": NUM_LAYERS,
-        "dropout": DROPOUT,
+        "sequence_length": config["sequence_length"],
+        "batch_size": config["batch_size"],
+        "hidden_size": config["hidden_size"],
+        "num_layers": config["num_layers"],
+        "dropout": config["dropout"],
+        "learning_rate": config["learning_rate"],
+        "max_epochs": config["max_epochs"],
+        "patience": config["patience"],
     }
 
-    torch.save(checkpoint, models_dir / "gru_model.pt")
-    history_df.to_csv(logs_dir / "gru_training_history.csv", index=False)
+    torch.save(checkpoint, models_dir / f"{output_name}.pt")
+    history_df.to_csv(logs_dir / f"{output_name}_training_history.csv", index=False)
     validation_predictions_df.to_csv(
-        predictions_dir / "gru_validation_predictions.csv",
+        predictions_dir / f"{output_name}_validation_predictions.csv",
         index=False,
     )
     test_predictions_df.to_csv(
-        predictions_dir / "gru_test_predictions.csv",
+        predictions_dir / f"{output_name}_test_predictions.csv",
         index=False,
     )
-    report_df.to_csv(logs_dir / "gru_report.csv", index=False)
+    report_df.to_csv(logs_dir / f"{output_name}_report.csv", index=False)
 
     if compare_report_df is not None:
         compare_report_df.to_csv(
-            logs_dir / "baseline_gru_compare_report.csv",
+            logs_dir / f"{output_name}_baseline_compare_report.csv",
             index=False,
         )
 
 
-def create_gru_model():
+def create_gru_model(config):
     """
     Glavna funkcija za trening i evaluaciju GRU modela.
     """
@@ -538,11 +753,12 @@ def create_gru_model():
     feature_scaler, target_scaler = fit_scalers(train_df, feature_columns)
 
     x_train, y_train, _ = create_sequences(
-        train_df.head(SEQUENCE_LENGTH),
-        train_df.iloc[SEQUENCE_LENGTH:].copy(),
+        train_df.head(config["sequence_length"]),
+        train_df.iloc[config["sequence_length"] :].copy(),
         feature_columns,
         feature_scaler,
         target_scaler,
+        sequence_length=config["sequence_length"],
     )
     x_validation, y_validation, validation_predictions_df = create_sequences(
         train_df,
@@ -550,6 +766,7 @@ def create_gru_model():
         feature_columns,
         feature_scaler,
         target_scaler,
+        sequence_length=config["sequence_length"],
     )
     x_test, y_test, test_predictions_df = create_sequences(
         validation_df,
@@ -557,6 +774,7 @@ def create_gru_model():
         feature_columns,
         feature_scaler,
         target_scaler,
+        sequence_length=config["sequence_length"],
     )
 
     train_loader = create_data_loader(
@@ -565,7 +783,7 @@ def create_gru_model():
         TensorDataset,
         x_train,
         y_train,
-        BATCH_SIZE,
+        config["batch_size"],
         shuffle=True,
     )
     validation_loader = create_data_loader(
@@ -574,11 +792,11 @@ def create_gru_model():
         TensorDataset,
         x_validation,
         y_validation,
-        BATCH_SIZE,
+        config["batch_size"],
         shuffle=False,
     )
 
-    GRURegressor = build_gru_model_class(nn)
+    GRURegressor = build_gru_model_class(nn, config)
     model = GRURegressor(input_size=len(feature_columns)).to(device)
 
     model, history_df = train_gru_model(
@@ -588,6 +806,7 @@ def create_gru_model():
         device,
         torch,
         nn,
+        config,
     )
 
     validation_predictions = predict(
@@ -616,19 +835,15 @@ def create_gru_model():
 
     report_df = pd.concat(
         [
-            create_prediction_report(validation_predictions_df, "validation"),
-            create_prediction_report(test_predictions_df, "test"),
+            create_prediction_report(
+                validation_predictions_df,
+                "validation",
+                config["name"],
+            ),
+            create_prediction_report(test_predictions_df, "test", config["name"]),
         ],
         ignore_index=True,
     )
-
-    baseline_report_df = load_baseline_report()
-    compare_report_df = None
-    if baseline_report_df is not None:
-        compare_report_df = create_baseline_gru_compare_report(
-            baseline_report_df,
-            report_df,
-        )
 
     save_outputs(
         torch,
@@ -640,11 +855,47 @@ def create_gru_model():
         validation_predictions_df,
         test_predictions_df,
         report_df,
-        compare_report_df,
+        compare_report_df=None,
+        config=config,
     )
 
-    return report_df
+    return {
+        "config": config,
+        "report_df": report_df,
+        "history_df": history_df,
+        "validation_predictions_df": validation_predictions_df,
+        "test_predictions_df": test_predictions_df,
+        "validation_mae": get_summary_metric(report_df, "validation", "MAE"),
+        "test_mae": get_summary_metric(report_df, "test", "MAE"),
+    }
+
+
+def create_gru_models():
+    """
+    Trenira po jedan GRU model za svaku konfiguraciju hiperparametara.
+    """
+    reports = []
+    results = []
+
+    for config in HYPERPARAMETER_CONFIGS:
+        result = create_gru_model(config)
+        results.append(result)
+        reports.append(result["report_df"])
+
+    combined_report_df = pd.concat(reports, ignore_index=True)
+    logs_dir = Path("data/logs")
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    combined_report_df.to_csv(logs_dir / "gru_hyperparameter_report.csv", index=False)
+    create_gru_model_summaries(results).to_csv(
+        logs_dir / "gru_model_summaries.csv",
+        index=False,
+    )
+
+    best_result = min(results, key=lambda result: result["validation_mae"])
+    save_best_gru_outputs(best_result)
+
+    return combined_report_df
 
 
 if __name__ == "__main__":
-    create_gru_model()
+    create_gru_models()

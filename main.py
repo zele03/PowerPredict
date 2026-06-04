@@ -18,47 +18,19 @@ def run_baseline_pipeline():
     create_baseline_graphs()
 
 
-def run_gru_training():
-    """
-    Pokrece GRU trening samo kada korisnik eksplicitno izabere tu komandu.
-    """
-    from src.step06_gru_model import create_gru_model
-
-    create_gru_model()
-
-
-def run_gru_graphs():
-    """
-    Kreira osnovne GRU grafike iz vec istreniranog modela.
-    """
-    from src.step07_gru_visualization import create_gru_graphs
-
-    create_gru_graphs()
-
-
-def run_gru_compare_graphs():
-    """
-    Kreira uporedne baseline vs GRU grafike.
-    """
-    from src.step07_gru_visualization import create_baseline_gru_compare_graphs
-
-    create_baseline_gru_compare_graphs()
-
-
-def run_gru_visualizations():
-    """
-    Kreira sve GRU vizualizacije nakon treninga.
-    """
-    run_gru_graphs()
-    run_gru_compare_graphs()
-
-
 def run_gru_pipeline():
     """
     Pokrece GRU trening i zatim sve GRU vizualizacije.
     """
-    run_gru_training()
-    run_gru_visualizations()
+    from src.step06_gru_model import create_gru_models
+    from src.step07_gru_visualization import (
+        create_baseline_gru_compare_graphs,
+        create_gru_graphs,
+    )
+
+    create_gru_models()
+    create_gru_graphs()
+    create_baseline_gru_compare_graphs()
 
 
 def parse_args():
@@ -68,18 +40,12 @@ def parse_args():
     parser.add_argument(
         "command",
         nargs="?",
-        default="baseline",
+        default=None,
         choices=[
-            "baseline",
-            "gru-train",
-            "gru-graphs",
-            "gru-compare-graphs",
-            "gru-visualizations",
             "gru-pipeline",
         ],
         help=(
-            "Workflow koji treba pokrenuti. "
-            "Default je 'baseline', bez PyTorch/GRU treninga."
+            "Opcioni workflow. Bez argumenta pokrece sve do GRU treninga."
         ),
     )
 
@@ -89,18 +55,10 @@ def parse_args():
 def main():
     args = parse_args()
 
-    if args.command == "baseline":
-        run_baseline_pipeline()
-    elif args.command == "gru-train":
-        run_gru_training()
-    elif args.command == "gru-graphs":
-        run_gru_graphs()
-    elif args.command == "gru-compare-graphs":
-        run_gru_compare_graphs()
-    elif args.command == "gru-visualizations":
-        run_gru_visualizations()
-    elif args.command == "gru-pipeline":
+    if args.command == "gru-pipeline":
         run_gru_pipeline()
+    else:
+        run_baseline_pipeline()
 
 
 if __name__ == "__main__":
