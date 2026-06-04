@@ -186,4 +186,5 @@ Rad obuhvata pripremu i čišćenje podataka i njihovu transformaciju u oblik po
   - GRU model značajno nadmašuje baseline `lag_24h` model na test skupu.
   - Sekvencijalni pristup je pogodniji za ovaj problem, jer model koristi obrazac iz prethodna 24 sata umesto samo jedne prethodne vrednosti.
   - Najbolja konfiguracija za izbor hiperparametara određuje se prema validation MAE, dok se test metrike koriste za finalno izveštavanje i poređenje sa baseline modelom.
+  - U okviru testiranih konfiguracija, jednostavnija GRU arhitektura (`hidden_size = 32`, jedan GRU sloj) ostvarila je najbolji `validation_MAE`, što ukazuje da **složeniji modeli nisu doneli bolju generalizaciju** za ovaj slučaj.
 
