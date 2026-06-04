@@ -381,7 +381,7 @@ def predict(torch, model, x_values, target_scaler, device):
 
 def calculate_metrics(y_true, y_pred):
     """
-    Racuna WAPE, MAE, RMSE, MAPE i sMAPE.
+    Racuna MAE, RMSE, MAPE, sMAPE i WAPE.
     """
     errors = y_true - y_pred
     absolute_errors = np.abs(errors)
@@ -406,11 +406,11 @@ def calculate_metrics(y_true, y_pred):
     )
 
     return {
-        "WAPE": round(wape, 4),
         "MAE": round(mae, 4),
         "RMSE": round(rmse, 4),
         "MAPE": round(mape, 4),
         "sMAPE": round(smape, 4),
+        "WAPE": round(wape, 4),
     }
 
 
@@ -479,7 +479,7 @@ def create_baseline_gru_compare_report(
     baseline_df["Model"] = BASELINE_MODEL_NAME
     baseline_df = baseline_df.drop(columns=["Baseline"], errors="ignore")
 
-    metric_columns = ["MAE", "RMSE", "WAPE"]
+    metric_columns = ["MAE", "RMSE", "MAPE", "sMAPE", "WAPE"]
     key_columns = ["Report_Type", "Dataset", "Hour"]
 
     baseline_metrics = baseline_df[
@@ -531,6 +531,12 @@ def create_baseline_gru_compare_report(
         "Baseline_RMSE",
         "GRU_RMSE",
         "RMSE_Improvement_percent",
+        "Baseline_MAPE",
+        "GRU_MAPE",
+        "MAPE_Improvement_percent",
+        "Baseline_sMAPE",
+        "GRU_sMAPE",
+        "sMAPE_Improvement_percent",
         "Baseline_WAPE",
         "GRU_WAPE",
         "WAPE_Improvement_percent",
@@ -576,16 +582,16 @@ def create_best_gru_summary(best_result):
                 "learning_rate": config["learning_rate"],
                 "max_epochs": config["max_epochs"],
                 "patience": config["patience"],
-                "validation_WAPE": validation_summary["WAPE"],
                 "validation_MAE": validation_summary["MAE"],
                 "validation_RMSE": validation_summary["RMSE"],
                 "validation_MAPE": validation_summary["MAPE"],
                 "validation_sMAPE": validation_summary["sMAPE"],
-                "test_WAPE": test_summary["WAPE"],
+                "validation_WAPE": validation_summary["WAPE"],
                 "test_MAE": test_summary["MAE"],
                 "test_RMSE": test_summary["RMSE"],
                 "test_MAPE": test_summary["MAPE"],
                 "test_sMAPE": test_summary["sMAPE"],
+                "test_WAPE": test_summary["WAPE"],
             }
         ]
     )
@@ -619,16 +625,16 @@ def create_gru_model_summaries(results):
                 "learning_rate": config["learning_rate"],
                 "max_epochs": config["max_epochs"],
                 "patience": config["patience"],
-                "validation_WAPE": validation_summary["WAPE"],
                 "validation_MAE": validation_summary["MAE"],
                 "validation_RMSE": validation_summary["RMSE"],
                 "validation_MAPE": validation_summary["MAPE"],
                 "validation_sMAPE": validation_summary["sMAPE"],
-                "test_WAPE": test_summary["WAPE"],
+                "validation_WAPE": validation_summary["WAPE"],
                 "test_MAE": test_summary["MAE"],
                 "test_RMSE": test_summary["RMSE"],
                 "test_MAPE": test_summary["MAPE"],
                 "test_sMAPE": test_summary["sMAPE"],
+                "test_WAPE": test_summary["WAPE"],
             }
         )
 

@@ -19,10 +19,75 @@ def load_model_summaries():
     """
     summaries_path = Path("data/logs/gru_logs/gru_model_summaries.csv")
 
-    if not summaries_path.exists():
-        return pd.DataFrame()
+    if summaries_path.exists():
+        summaries_df = pd.read_csv(summaries_path)
+        if "validation_MAE" in summaries_df.columns:
+            return summaries_df
 
-    return pd.read_csv(summaries_path)
+    return create_model_summaries_from_reports()
+
+
+def create_model_summaries_from_reports():
+    """
+    Rekonstruise summary tabelu iz pojedinacnih GRU reportova.
+    """
+    summary_rows = []
+    existing_summaries_path = Path("data/logs/gru_logs/gru_model_summaries.csv")
+    existing_summaries_df = (
+        pd.read_csv(existing_summaries_path)
+        if existing_summaries_path.exists()
+        else pd.DataFrame()
+    )
+
+    for report_path in Path("data/logs/gru_logs").glob("*_report.csv"):
+        model_name = report_path.stem.removesuffix("_report")
+        if model_name == "gru_hyperparameter":
+            continue
+
+        report_df = pd.read_csv(report_path)
+
+        validation_summary = report_df[
+            (report_df["Report_Type"] == "summary")
+            & (report_df["Dataset"] == "validation")
+        ]
+        test_summary = report_df[
+            (report_df["Report_Type"] == "summary")
+            & (report_df["Dataset"] == "test")
+        ]
+
+        if validation_summary.empty or test_summary.empty:
+            continue
+
+        validation_summary = validation_summary.iloc[0]
+        test_summary = test_summary.iloc[0]
+        existing_row = existing_summaries_df[
+            existing_summaries_df.get("Model", pd.Series(dtype=str)) == model_name
+        ]
+        existing_row = existing_row.iloc[0] if not existing_row.empty else {}
+
+        summary_rows.append(
+            {
+                "Model": model_name,
+                "sequence_length": existing_row.get("sequence_length", ""),
+                "batch_size": existing_row.get("batch_size", ""),
+                "hidden_size": existing_row.get("hidden_size", ""),
+                "num_layers": existing_row.get("num_layers", ""),
+                "dropout": existing_row.get("dropout", ""),
+                "learning_rate": existing_row.get("learning_rate", ""),
+                "validation_MAE": validation_summary["MAE"],
+                "validation_RMSE": validation_summary["RMSE"],
+                "validation_MAPE": validation_summary["MAPE"],
+                "validation_sMAPE": validation_summary["sMAPE"],
+                "validation_WAPE": validation_summary["WAPE"],
+                "test_MAE": test_summary["MAE"],
+                "test_RMSE": test_summary["RMSE"],
+                "test_MAPE": test_summary["MAPE"],
+                "test_sMAPE": test_summary["sMAPE"],
+                "test_WAPE": test_summary["WAPE"],
+            }
+        )
+
+    return pd.DataFrame(summary_rows)
 
 
 def get_gru_model_names():
@@ -85,6 +150,8 @@ def get_graph_details(model_name):
         f"validation MAE={summary_row['validation_MAE']} | "
         f"test MAE={summary_row['test_MAE']} | "
         f"test RMSE={summary_row['test_RMSE']} | "
+        f"test MAPE={summary_row['test_MAPE']} | "
+        f"test sMAPE={summary_row['test_sMAPE']} | "
         f"test WAPE={summary_row['test_WAPE']}"
     )
 
@@ -122,7 +189,9 @@ def load_best_gru_model_name():
 
     if best_summary_path.exists():
         best_summary_df = pd.read_csv(best_summary_path)
-        return best_summary_df.iloc[0]["Model"]
+        selection_metric = best_summary_df.iloc[0].get("selection_metric")
+        if selection_metric == "validation_MAE":
+            return best_summary_df.iloc[0]["Model"]
 
     summaries_df = load_model_summaries()
     if not summaries_df.empty:

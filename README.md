@@ -1,7 +1,7 @@
 # PowerPredict
 
 PowerPredict je studentski projekat za predikciju potrosnje elektricne energije
-u domacinstvu na osnovu Household Power Consumption dataset-a.
+domacinstva na osnovu Household Power Consumption dataset-a.
 
 Sistem predvidja potrosnju energije po satima i evaluira modele nad validation i
 test skupovima pomocu metrika WAPE, MAE, RMSE, MAPE i sMAPE.
@@ -64,13 +64,7 @@ da koristi CUDA/GPU podrsku.
 Nakon sto se zavrsi osnovni pipeline, GRU se trenira eksplicitno:
 
 ```bash
-uv run main.py gru-train
-```
-
-Zatim se generisu GRU i baseline-vs-GRU grafici:
-
-```bash
-uv run main.py gru-visualizations
+uv run main.py gru-pipeline
 ```
 
 Detaljno uputstvo za GRU setup i objasnjenje komandi nalazi se u:
@@ -83,12 +77,7 @@ docs/gru_training_instructions.md
 
 ```bash
 uv run main.py                    # osnovni baseline workflow
-uv run main.py baseline           # isto kao osnovno pokretanje
-uv run main.py gru-train          # trenira GRU model
-uv run main.py gru-graphs         # pravi samo GRU grafike
-uv run main.py gru-compare-graphs # pravi uporedne grafike
-uv run main.py gru-visualizations # pravi sve GRU grafike
-uv run main.py gru-pipeline       # trenira GRU i pravi sve GRU grafike
+uv run main.py gru-pipeline       # trenira GRU, poredi rezultate, crta grafike...
 ```
 
 ## Dokumentacija

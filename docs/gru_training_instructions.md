@@ -1,11 +1,12 @@
 # Uputstvo Za Treniranje GRU Modela
 
-Ovaj dokument objasnjava kako se pokrece GRU model nakon kloniranja ili
+Ovaj dokument objasnjava kako se pokrece GRU deo projekta nakon kloniranja ili
 pull-ovanja projekta.
 
-Podrazumevani workflow projekta ne trenira GRU model, zato sto GRU trening
-zahteva PyTorch okruzenje i moze da traje znatno duze od preprocessinga,
-baseline evaluacije i baseline vizualizacije.
+Osnovni workflow ne trenira GRU model, zato sto GRU trening zahteva PyTorch
+okruzenje i moze da traje znatno duze od preprocessinga, baseline evaluacije i
+baseline vizualizacije, pogotovo zato sto trenira vise modela sa razlicitim
+hiperparametrima jedan za drugim.
 
 ## 1. Pokrenuti Osnovni Pipeline
 
@@ -13,13 +14,6 @@ Prvo pokrenuti:
 
 ```bash
 uv run main.py
-```
-
-Ekvivalentne komande:
-
-```bash
-uv run python main.py
-python main.py
 ```
 
 Ovo pokrece:
@@ -32,7 +26,7 @@ step04 baseline model
 step05 baseline vizualizacije
 ```
 
-Pre GRU treninga treba da postoje sledeci fajlovi:
+Pre GRU treninga treba da postoje:
 
 ```text
 data/processed/split/train.csv
@@ -62,98 +56,130 @@ toj masini, instalirati PyTorch zvanicnom komandom za konkretno okruzenje:
 https://pytorch.org/get-started/locally/
 ```
 
-## 3. Trenirati GRU Model
+## 3. Pokrenuti GRU Pipeline
 
 Kada se osnovni pipeline zavrsi, pokrenuti:
-
-```bash
-uv run main.py gru-train
-```
-
-Ekvivalentna module komanda:
-
-```bash
-uv run python -m src.step06_gru_model
-```
-
-Ovaj korak kreira:
-
-```text
-models/gru_model.pt
-data/logs/gru_training_history.csv
-data/logs/gru_report.csv
-data/logs/baseline_gru_compare_report.csv
-data/predictions/gru_validation_predictions.csv
-data/predictions/gru_test_predictions.csv
-```
-
-Model se trenira samo na train skupu. Validation skup se koristi za early
-stopping. Test skup se koristi samo za finalnu evaluaciju.
-
-## 4. Kreirati GRU Grafike
-
-Nakon treninga, pokrenuti:
-
-```bash
-uv run main.py gru-visualizations
-```
-
-Ova komanda kreira i GRU-only grafike i baseline-vs-GRU uporedne grafike:
-
-```text
-data/graphs/gru_graphs/
-data/graphs/baseline_gru_compare_graphs/
-```
-
-GRU-only grafici:
-
-```text
-gru_test_hourly_wape.png
-gru_test_hourly_mae.png
-gru_test_actual_vs_predicted_scatter.png
-gru_test_error_distribution.png
-```
-
-Uporedni grafici:
-
-```text
-baseline_gru_compare_test_hourly_wape.png
-baseline_gru_compare_test_hourly_mae.png
-baseline_gru_compare_test_actual_vs_predicted_scatter.png
-baseline_gru_compare_test_error_distribution.png
-```
-
-## 5. Opcione Komande
-
-Pokrenuti samo GRU grafike:
-
-```bash
-uv run main.py gru-graphs
-```
-
-Pokrenuti samo baseline-vs-GRU uporedne grafike:
-
-```bash
-uv run main.py gru-compare-graphs
-```
-
-Pokrenuti GRU trening i sve GRU vizualizacije jednom komandom:
 
 ```bash
 uv run main.py gru-pipeline
 ```
 
-Komandu `gru-pipeline` koristiti samo kada masina vec ima ispravno podeseno
-PyTorch okruzenje.
+Ova komanda radi:
 
-## 6. Pregled Glavnih Komandi
+```text
+step06 treniranje svih GRU konfiguracija iz HYPERPARAMETER_CONFIGS
+step07 crtanje grafova za sve GRU modele
+step07 crtanje baseline vs najbolji GRU grafova
+```
+
+GRU modeli se treniraju jedan po jedan, redom iz liste
+`HYPERPARAMETER_CONFIGS` u `src/step06_gru_model.py`.
+
+## 4. Kako Se Bira Najbolji GRU
+
+Svaki GRU model se trenira na train skupu.
+
+Validation skup se koristi za:
+
+```text
+early stopping
+izbor najboljih hiperparametara
+```
+
+Najbolji GRU se bira po:
+
+```text
+validation_MAE
+```
+
+Test skup se koristi za:
+
+```text
+finalnu evaluaciju
+GRU grafove
+baseline vs najbolji GRU compare report
+baseline vs najbolji GRU uporedne grafove
+```
+
+Ovo znaci da se hiperparametri ne biraju po test skupu, vec se test koristi kao
+finalna provera modela.
+
+## 5. Output Fajlovi
+
+Trenirani modeli:
+
+```text
+models/{model_name}.pt
+```
+
+GRU predikcije:
+
+```text
+data/predictions/gru_predictions/{model_name}_validation_predictions.csv
+data/predictions/gru_predictions/{model_name}_test_predictions.csv
+```
+
+GRU logovi:
+
+```text
+data/logs/gru_logs/{model_name}_training_history.csv
+data/logs/gru_logs/{model_name}_report.csv
+data/logs/gru_logs/gru_hyperparameter_report.csv
+data/logs/gru_logs/gru_model_summaries.csv
+data/logs/gru_logs/best_gru_model_summary.csv
+```
+
+Compare logovi:
+
+```text
+data/logs/compare_logs/baseline_gru_compare_report.csv
+```
+
+GRU grafovi za svaki model:
+
+```text
+data/graphs/gru_graphs/{model_name}_test_hourly_wape.png
+data/graphs/gru_graphs/{model_name}_test_hourly_mae.png
+data/graphs/gru_graphs/{model_name}_test_actual_vs_predicted_scatter.png
+data/graphs/gru_graphs/{model_name}_test_error_distribution.png
+```
+
+Baseline vs najbolji GRU grafovi:
+
+```text
+data/graphs/baseline_gru_compare_graphs/
+```
+
+Nazivi grafova sadrze naziv najboljeg GRU modela, a na samim grafovima su
+ispisani hiperparametri i glavne metrike.
+
+## 6. Dodavanje Novih GRU Modela
+
+Za dodavanje novog modela dodati novu konfiguraciju u
+`HYPERPARAMETER_CONFIGS`.
+
+Primer:
+
+```python
+{
+    "name": "gru_seq48_h128_l2_d0.3_lr0.0005_bs64",
+    "sequence_length": 48,
+    "batch_size": 64,
+    "hidden_size": 128,
+    "num_layers": 2,
+    "dropout": 0.3,
+    "learning_rate": 0.0005,
+    "max_epochs": 80,
+    "patience": 10,
+}
+```
+
+Polje `name` mora biti jedinstveno, jer se koristi u nazivima modela,
+predikcija, reportova i grafova.
+
+## 7. Glavne Komande
 
 ```bash
-uv run main.py                    # osnovni baseline workflow
-uv run main.py baseline           # isto kao osnovno pokretanje
-uv run main.py gru-train          # trenira GRU model
-uv run main.py gru-graphs         # pravi samo GRU grafike
-uv run main.py gru-compare-graphs # pravi uporedne grafike
-uv run main.py gru-visualizations # pravi sve GRU grafike
-uv run main.py gru-pipeline       # trenira GRU i pravi sve GRU grafike
+uv run main.py              # osnovni baseline workflow
+uv run main.py gru-pipeline # trenira sve GRU modele, poredi ih i pravi GRU grafove
 ```
