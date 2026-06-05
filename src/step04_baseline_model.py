@@ -53,11 +53,11 @@ def evaluate_baseline(df, dataset_name):
         "Dataset": dataset_name,
         "Baseline": BASELINE_COLUMN,
         "Hour": "",
-        "WAPE": round(wape, 4),
         "MAE": round(mae, 4),
         "RMSE": round(rmse, 4),
         "MAPE": round(mape, 4),
         "sMAPE": round(smape, 4),
+        "WAPE": round(wape, 4),
         "Broj_redova": len(df),
     }
 
