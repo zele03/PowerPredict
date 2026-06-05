@@ -87,3 +87,9 @@ Detaljna projektna dokumentacija:
 ```text
 docs/documentation.md
 ```
+
+## Kratak vodič kroz projekat
+
+```text
+docs/powerpredict_walkthrough.ipynb
+```
