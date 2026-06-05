@@ -182,6 +182,12 @@ Rad obuhvata pripremu i čišćenje podataka i njihovu transformaciju u oblik po
     data/graphs/baseline_gru_compare_graphs/
     ```
 
+  - Grafici promene greške kroz epohe za train i validation skup čuvaju se za svaku GRU konfiguraciju u:
+
+    ```text
+    data/graphs/gru_graphs/{model_name}_training_history.png
+    ```
+
 - **Zaključci:**
   - GRU model značajno nadmašuje baseline `lag_24h` model na test skupu.
   - Sekvencijalni pristup je pogodniji za ovaj problem, jer model koristi obrazac iz prethodna 24 sata umesto samo jedne prethodne vrednosti.

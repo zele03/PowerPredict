@@ -181,6 +181,18 @@ def load_gru_outputs(model_name):
     return predictions_df, report_df
 
 
+def load_training_history(model_name):
+    """
+    Ucitava istoriju train i validation loss-a za jedan GRU model.
+    """
+    history_path = Path(f"data/logs/gru_logs/{model_name}_training_history.csv")
+
+    if not history_path.exists():
+        return pd.DataFrame()
+
+    return pd.read_csv(history_path)
+
+
 def load_best_gru_model_name():
     """
     Vraca naziv najboljeg GRU modela iz step06 outputa.
@@ -484,6 +496,69 @@ def plot_error_distribution(predictions_df, graphs_dir, axis_config, model_name,
     plt.close(fig)
 
 
+def plot_training_history(history_df, graphs_dir, model_name, details):
+    """
+    Prikazuje promenu train i validation loss-a kroz epohe.
+    """
+    if history_df.empty:
+        return
+
+    best_validation_index = history_df["validation_loss"].astype(float).idxmin()
+    best_validation_row = history_df.loc[best_validation_index]
+    last_epoch = int(history_df["epoch"].iloc[-1])
+    best_epoch = int(best_validation_row["epoch"])
+    best_validation_loss = float(best_validation_row["validation_loss"])
+
+    fig, ax = plt.subplots(figsize=(12, 5))
+
+    ax.plot(
+        history_df["epoch"],
+        history_df["train_loss"],
+        marker="o",
+        linewidth=2,
+        label="Train loss",
+        color="tab:blue",
+    )
+    ax.plot(
+        history_df["epoch"],
+        history_df["validation_loss"],
+        marker="o",
+        linewidth=2,
+        label="Validation loss",
+        color="tab:orange",
+    )
+    ax.axvline(
+        best_epoch,
+        color="tab:green",
+        linestyle="--",
+        linewidth=1.5,
+        label=f"Best validation epoch: {best_epoch}",
+    )
+    ax.axvline(
+        last_epoch,
+        color="tab:red",
+        linestyle=":",
+        linewidth=1.5,
+        label=f"Stopped at epoch: {last_epoch}",
+    )
+
+    ax.set_title(f"GRU training history - {model_name}")
+    ax.set_xlabel("Epoch")
+    ax.set_ylabel("MSE loss on scaled target")
+    ax.set_xticks(history_df["epoch"])
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    add_graph_details(
+        fig,
+        details,
+        f"Best validation loss={best_validation_loss:.6f} at epoch {best_epoch}",
+    )
+
+    fig.tight_layout(rect=(0, 0.16, 1, 1))
+    fig.savefig(graphs_dir / f"{model_name}_training_history.png")
+    plt.close(fig)
+
+
 def plot_compare_error_distribution(compare_df, graphs_dir, axis_config, model_name, details):
     """
     Prikazuje distribuciju apsolutnih gresaka za baseline i najbolji GRU.
@@ -531,7 +606,7 @@ def plot_compare_error_distribution(compare_df, graphs_dir, axis_config, model_n
 
 def create_gru_graphs():
     """
-    Kreira 4 graficka prikaza za svaki GRU model iz step06.
+    Kreira graficke prikaze za svaki GRU model iz step06.
     """
     graphs_dir = Path("data/graphs/gru_graphs")
     graphs_dir.mkdir(parents=True, exist_ok=True)
@@ -544,6 +619,7 @@ def create_gru_graphs():
 
     for model_name in get_gru_model_names():
         predictions_df, report_df = load_gru_outputs(model_name)
+        history_df = load_training_history(model_name)
         details = get_graph_details(model_name)
         error_axis_config = create_error_axis_config(
             [
@@ -567,6 +643,7 @@ def create_gru_graphs():
             model_name,
             details,
         )
+        plot_training_history(history_df, graphs_dir, model_name, details)
 
 
 def create_baseline_gru_compare_graphs():
