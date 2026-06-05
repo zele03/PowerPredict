@@ -83,6 +83,21 @@ Rad obuhvata pripremu i čišćenje podataka i njihovu transformaciju u oblik po
     | Najgori sati     | 14h–18h, 23h         | 0.6             |
     | Najbolji sati    | 05h-10h              | 0.2-0.5         |
 
+- **Output fajlovi:**
+  - Baseline report sa summary i hourly metrikama čuva se u:
+
+    ```text
+    data/logs/baseline_report.csv
+    ```
+
+  - Grafički prikazi baseline rezultata čuvaju se u:
+
+    ```text
+    data/graphs/baseline_graphs/
+    ```
+
+  - Baseline grafovi obuhvataju hourly MAE, hourly WAPE, scatter odnos stvarnih i predviđenih vrednosti i distribuciju apsolutne greške na test skupu.
+
 - **Zaključci:**
   - Baseline `lag_24h` pokazuje slabosti u popodnevnim satima (14h–18h), posebno oko 15h–17h, gde se potrošnja značajno razlikuje od prethodnog dana.
   - Jutarnji sati (7h–10h) su stabilniji i daju bolje rezultate.
