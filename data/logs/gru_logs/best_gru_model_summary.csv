@@ -1,2 +1,2 @@
 Model,selection_metric,sequence_length,batch_size,hidden_size,num_layers,dropout,learning_rate,max_epochs,patience,validation_MAE,validation_RMSE,validation_MAPE,validation_sMAPE,validation_WAPE,test_MAE,test_RMSE,test_MAPE,test_sMAPE,test_WAPE
-gru_seq24_h32_l1_d0_lr0.001_bs64,validation_MAE,24,64,32,1,0.0,0.001,80,10,0.3745,0.5403,39.1649,31.8706,30.0027,0.3372,0.481,45.7823,36.3957,35.152
+gru_seq24_h64_l1_d0p0_lr0p0005_bs64,validation_MAE,24,64,64,1,0.0,0.0005,80,10,0.3714,0.5384,38.0545,31.6183,29.7588,0.3291,0.4791,41.8855,35.1092,34.3047

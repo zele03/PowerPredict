@@ -1,3 +1,4 @@
+from itertools import product
 from pathlib import Path
 from tqdm import trange
 
@@ -21,46 +22,73 @@ DEFAULT_MAX_EPOCHS = 80  # Podrazumevani maksimalan broj epoha treninga
 DEFAULT_PATIENCE = 10  # Podrazumevani early stopping patience
 
 
-HYPERPARAMETER_CONFIGS = [
-    {
-        "name": "gru_seq24_h32_l1_d0_lr0.001_bs64",
-        "sequence_length": 24,
-        "batch_size": 64,
-        "hidden_size": 32,
-        "num_layers": 1,
-        "dropout": 0.0,
-        "learning_rate": 0.001,
-        "max_epochs": 80,
-        "patience": 10,
-    },
-    {
-        "name": "gru_seq24_h64_l2_d0.2_lr0.001_bs64",
-        "sequence_length": 24,
-        "batch_size": 64,
-        "hidden_size": 64,
-        "num_layers": 2,
-        "dropout": 0.2,
-        "learning_rate": 0.001,
-        "max_epochs": 80,
-        "patience": 10,
-    },
-    {
-        "name": "gru_seq24_h128_l2_d0.3_lr0.0005_bs64",
-        "sequence_length": 24,
-        "batch_size": 64,
-        "hidden_size": 128,
-        "num_layers": 2,
-        "dropout": 0.3,
-        "learning_rate": 0.0005,
-        "max_epochs": 80,
-        "patience": 10,
-    },
-]
+GRU_GRID_SEARCH_SPACE = {
+    "sequence_length": [12, 24, 48],
+    "batch_size": [64],
+    "hidden_size": [32, 64, 128],
+    "num_layers": [1, 2],
+    "dropout": [0.0, 0.2, 0.3],
+    "learning_rate": [0.001, 0.0005],
+    "max_epochs": [80],
+    "patience": [10],
+}
 
 EXCLUDED_FEATURE_COLUMNS = [
     "datetime",
     "Global_active_power",
 ]
+
+
+def format_hyperparameter_value(value):
+    """
+    Formatira vrednosti hiperparametara za naziv modela.
+    """
+    return str(value).replace(".", "p")
+
+
+def build_gru_config_name(config):
+    """
+    Kreira jedinstven naziv modela na osnovu hiperparametara.
+    """
+    return (
+        f"gru_seq{config['sequence_length']}"
+        f"_h{config['hidden_size']}"
+        f"_l{config['num_layers']}"
+        f"_d{format_hyperparameter_value(config['dropout'])}"
+        f"_lr{format_hyperparameter_value(config['learning_rate'])}"
+        f"_bs{config['batch_size']}"
+    )
+
+
+def generate_gru_grid_configs(search_space=GRU_GRID_SEARCH_SPACE):
+    """
+    Generise sve validne kombinacije hiperparametara za GRU grid search.
+    """
+    search_keys = [
+        "sequence_length",
+        "batch_size",
+        "hidden_size",
+        "num_layers",
+        "dropout",
+        "learning_rate",
+        "max_epochs",
+        "patience",
+    ]
+    configs = []
+
+    for values in product(*(search_space[key] for key in search_keys)):
+        config = dict(zip(search_keys, values))
+
+        if config["num_layers"] == 1 and config["dropout"] > 0:
+            continue
+
+        config["name"] = build_gru_config_name(config)
+        configs.append(config)
+
+    return configs
+
+
+HYPERPARAMETER_CONFIGS = generate_gru_grid_configs()
 
 
 def import_torch():
@@ -478,6 +506,14 @@ def create_baseline_gru_compare_report(
 
     baseline_df["Model"] = BASELINE_MODEL_NAME
     baseline_df = baseline_df.drop(columns=["Baseline"], errors="ignore")
+
+    for df in [baseline_df, gru_df]:
+        df["Hour"] = (
+            df["Hour"]
+            .fillna("")
+            .astype(str)
+            .str.replace(r"\.0$", "", regex=True)
+        )
 
     metric_columns = ["MAE", "RMSE", "MAPE", "sMAPE", "WAPE"]
     key_columns = ["Report_Type", "Dataset", "Hour"]
