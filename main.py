@@ -9,7 +9,7 @@ from src.step05_baseline_visualization import create_baseline_graphs
 
 def run_baseline_pipeline():
     """
-    Pokrece standardni workflow bez GRU treninga.
+    Pokrece standardni workflow bez GRU/LSTM treninga.
     """
     create_processed_dataset()
     create_feature_dataset()
@@ -33,6 +33,21 @@ def run_gru_pipeline():
     create_baseline_gru_compare_graphs()
 
 
+def run_lstm_pipeline():
+    """
+    Pokrece LSTM trening i zatim sve LSTM vizualizacije.
+    """
+    from src.step08_lstm_model import create_lstm_models
+    from src.step09_lstm_visualization import (
+        create_baseline_lstm_compare_graphs,
+        create_lstm_graphs,
+    )
+
+    create_lstm_models()
+    create_lstm_graphs()
+    create_baseline_lstm_compare_graphs()
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="PowerPredict workflow runner.",
@@ -43,9 +58,10 @@ def parse_args():
         default=None,
         choices=[
             "gru-pipeline",
+            "lstm-pipeline",
         ],
         help=(
-            "Opcioni workflow. Bez argumenta pokrece sve do GRU treninga."
+            "Opcioni workflow. Bez argumenta pokrece sve do neural network treninga."
         ),
     )
 
@@ -57,6 +73,8 @@ def main():
 
     if args.command == "gru-pipeline":
         run_gru_pipeline()
+    elif args.command == "lstm-pipeline":
+        run_lstm_pipeline()
     else:
         run_baseline_pipeline()
 
