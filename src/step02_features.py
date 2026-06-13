@@ -38,12 +38,14 @@ def add_rolling_features(df, target_col="Energy_kWh"):
     """
     Dodaje rolling statistike.
     """
+    shifted_target = df[target_col].shift(1)
+
     df["rolling_mean_24h"] = (
-        df[target_col].rolling(window=24).mean()
-    )  # Za svaki sat računa se prosek vrednosti u poslednjih 24 sata zaključno sa tim satom
+        shifted_target.rolling(window=24).mean()
+    )  # Za svaki sat racuna se prosek vrednosti u prethodna 24 sata
     df["rolling_std_7d"] = (
-        df[target_col].rolling(window=24 * 7).std()
-    )  # Za svaki sat računa se standardna devijacija vrednosti u poslednjih 7 dana (168 sati) zaključno sa tim satom
+        shifted_target.rolling(window=24 * 7).std()
+    )  # Za svaki sat racuna se standardna devijacija vrednosti u prethodnih 7 dana
     return df
 
 
