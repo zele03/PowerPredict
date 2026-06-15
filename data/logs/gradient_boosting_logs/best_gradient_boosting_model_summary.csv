@@ -1,0 +1,2 @@
+Model,selection_metric,validation_MAE,validation_RMSE,validation_MAPE,validation_sMAPE,validation_WAPE,test_MAE,test_RMSE,test_MAPE,test_sMAPE,test_WAPE,n_estimators,learning_rate,max_depth
+gradient_boosting_n200_lr0p05_depth5,validation_MAE,0.3715,0.5375,40.1634,32.0323,29.747,0.3269,0.4693,43.9538,35.2832,34.1121,200,0.05,5

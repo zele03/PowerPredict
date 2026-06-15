@@ -1,0 +1,2 @@
+Model,selection_metric,validation_MAE,validation_RMSE,validation_MAPE,validation_sMAPE,validation_WAPE,test_MAE,test_RMSE,test_MAPE,test_sMAPE,test_WAPE,n_estimators,max_depth,min_samples_leaf
+random_forest_n100_depth10_leaf1,validation_MAE,0.3737,0.5477,39.8521,31.7992,29.9251,0.3299,0.4744,44.8005,35.3065,34.4243,100,10,1

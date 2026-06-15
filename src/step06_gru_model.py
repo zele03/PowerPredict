@@ -729,7 +729,7 @@ def save_outputs(
     """
     Cuva model, istoriju treninga, predikcije i GRU report.
     """
-    models_dir = Path("models")
+    models_dir = Path("models/gru")
     logs_dir = Path("data/logs/gru_logs")
     predictions_dir = Path("data/predictions/gru_predictions")
 

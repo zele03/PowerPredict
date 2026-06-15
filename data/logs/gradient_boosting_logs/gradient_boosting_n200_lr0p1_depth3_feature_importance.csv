@@ -1,0 +1,12 @@
+Feature,Importance
+lag_1h,0.782258
+hour,0.092743
+lag_168h,0.051856
+lag_24h,0.03723
+rolling_std_7d,0.01364
+rolling_mean_24h,0.010665
+is_weekend,0.003373
+day_of_week,0.003332
+is_night,0.002623
+month,0.002155
+is_holiday,0.000124

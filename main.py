@@ -48,6 +48,17 @@ def run_lstm_pipeline():
     create_baseline_lstm_compare_graphs()
 
 
+def run_tree_pipeline():
+    """
+    Pokrece Random Forest i Gradient Boosting trening i vizualizacije.
+    """
+    from src.step10_tree_models import create_tree_models
+    from src.step11_tree_visualization import create_tree_visualizations
+
+    create_tree_models()
+    create_tree_visualizations()
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description="PowerPredict workflow runner.",
@@ -59,6 +70,7 @@ def parse_args():
         choices=[
             "gru-pipeline",
             "lstm-pipeline",
+            "tree-pipeline",
         ],
         help=(
             "Opcioni workflow. Bez argumenta pokrece sve do neural network treninga."
@@ -75,6 +87,8 @@ def main():
         run_gru_pipeline()
     elif args.command == "lstm-pipeline":
         run_lstm_pipeline()
+    elif args.command == "tree-pipeline":
+        run_tree_pipeline()
     else:
         run_baseline_pipeline()
 

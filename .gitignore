@@ -16,3 +16,6 @@ data/processed/features.csv
 data/processed/split/train.csv
 data/processed/split/validation.csv
 data/processed/split/test.csv
+
+# Large generated model artifacts
+models/random_forest/

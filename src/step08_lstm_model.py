@@ -729,7 +729,7 @@ def save_outputs(
     """
     Cuva model, istoriju treninga, predikcije i LSTM report.
     """
-    models_dir = Path("models")
+    models_dir = Path("models/lstm")
     logs_dir = Path("data/logs/lstm_logs")
     predictions_dir = Path("data/predictions/lstm_predictions")
 
