@@ -33,7 +33,7 @@ PowerPredict/
 |   |-- processed/
 |   `-- raw/
 |-- docs/
-|   |-- documentation.md
+|   |-- documentation.pdf
 |   `-- powerpredict_walkthrough.ipynb
 |-- models/
 |   |-- gradient_boosting/
@@ -214,7 +214,7 @@ Manji modeli, izveštaji i grafici ostavljeni su u repozitorijumu u koliko budu 
 Detaljnija projektna dokumentacija nalazi se u:
 
 ```text
-docs/documentation.md
+docs/documentation.pdf
 ```
 
 Interaktivan pregled projekta nalazi se u:
